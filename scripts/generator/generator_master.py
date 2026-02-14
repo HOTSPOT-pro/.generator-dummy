@@ -5,9 +5,9 @@ import random
 import time
 from typing import Optional, Dict, Any, List
 
-from scripts.generator.constants import *
-from scripts.generator.utils import *
-from scripts.generator.csv_writer import *
+from generator.constants import *
+from generator.utils import *
+from generator.csv_writer import *
 
 # ======================================================
 # Bulk Data Generator
@@ -36,58 +36,15 @@ class BulkDataGenerator:
         self.subscription_created_map: Dict[int, datetime] = {}
         self.family_subscriptions: List[Dict[str, Any]] = []
 
-        self.block_policy_map: Dict[int, Dict[str, Any]] = {}
+        self.block_policy_map = {
+            idx + 1: p for idx, p in enumerate(block_policies)
+        }
 
         self.app_code_to_id: Dict[str, int] = {code: idx + 1 for idx, (_, code) in enumerate(APP_BLOCKED_SERVICES)}
         self.app_code_to_name: Dict[str, str] = {code: name for name, code in APP_BLOCKED_SERVICES}
 
     # ======================================================
-    # 1️⃣ MASTER DATA
-    # ======================================================
-
-    def generate_master_data(self):
-        log_step("MASTER DATA 생성")
-
-        t = now()
-
-        # PLAN
-        for plan_id, p in PLANS.items():
-            self.csv.writer("plan").writerow(
-                [plan_id, p["name"], p["amount"], p["period"], False, t, t]
-            )
-        log_done(f"PLAN 생성 완료 ({len(PLANS)}건)")
-
-        # APP_BLOCKED_SERVICE
-        for idx, (name, code) in enumerate(APP_BLOCKED_SERVICES, start=1):
-            self.csv.writer("app_blocked_service").writerow(
-                [idx, name, code, False, t, t]
-            )
-        log_done(f"APP_BLOCKED_SERVICE 생성 완료 ({len(APP_BLOCKED_SERVICES)}건)")
-
-        # BLOCK_POLICY
-        for policy in block_policies:
-            pid = self.block_policy_seq
-
-            self.csv.writer("block_policy").writerow(
-                [
-                    pid,
-                    policy["name"],
-                    policy["type"].value,
-                    json.dumps(policy["snapshot"], ensure_ascii=False),
-                    False,
-                    t,
-                    t,
-                ]
-            )
-
-            self.block_policy_map[pid] = policy
-
-            self.block_policy_seq += 1
-
-        log_done(f"BLOCK_POLICY 생성 완료 ({len(block_policies)}건)")
-
-    # ======================================================
-    # 2️⃣ USER 생성
+    #  1️⃣ USER 생성
     # ======================================================
 
     def write_user(self, last_name: Optional[str], role_for_birth: FamilyRole):
@@ -140,6 +97,7 @@ class BulkDataGenerator:
         plan_id = random.choice(list(PLANS.keys()))
         phone_raw = generate_seq_phone(self.phone_seq)
         phone_enc = encrypt_aes(phone_raw)
+        phone_hash = generate_blind_index(phone_raw)
         self.phone_seq += 1
 
         sub_created = rand_datetime_between(member_created, now())
@@ -150,6 +108,7 @@ class BulkDataGenerator:
             plan_id, 
             member_id,
             phone_enc, 
+            phone_hash,
             is_locked,
             False,
             sub_created, 
@@ -184,7 +143,7 @@ class BulkDataGenerator:
         return sub_id
 
     # ======================================================
-    # 3️⃣ FAMILY 생성
+    #  2️⃣ FAMILY 생성
     # ======================================================
 
     def generate_family(self):
@@ -279,7 +238,7 @@ class BulkDataGenerator:
         return total_family_members
 
     # ======================================================
-    # 4️⃣ NON FAMILY 생성
+    #  3️⃣ NON FAMILY 생성
     # ======================================================
 
     def generate_remaining_users(self, already_created_members):
@@ -296,7 +255,7 @@ class BulkDataGenerator:
         log_done(f"비가족 사용자 생성 완료 ({remaining:,}명)")
     
     # ======================================================
-    # 5️⃣ POLICY_SUB 생성
+    #  4️⃣ POLICY_SUB 생성
     # ======================================================
     
     def generate_policy_sub(self):
@@ -359,7 +318,7 @@ class BulkDataGenerator:
     
 
     # ======================================================
-    # 6️⃣ BLOCKED_SERVICE_SUB 생성
+    #  5️⃣ BLOCKED_SERVICE_SUB 생성
     # ======================================================
 
     def generate_blocked_service_sub(self):
@@ -416,7 +375,7 @@ class BulkDataGenerator:
         log_done(f"BLOCKED_SERVICE_SUB 생성 완료 ({created:,}건)")
 
     # ======================================================
-    # 7️⃣ PRESENT_DATA 생성
+    # 6️⃣ PRESENT_DATA 생성
     # ======================================================
 
     def generate_present_data(self):
@@ -497,6 +456,9 @@ class BulkDataGenerator:
 
         log_done(f"PRESENT_DATA 생성 완료 ({created:,}건)")
 
+    # ======================================================
+    # 7️⃣ NOTIFIACTION 생성
+    # ======================================================
 
     def create_notification(self, sub_id: int, noti_type: NotificationType, message: str, created_time: datetime):
         self.csv.writer("notification").writerow([
@@ -504,9 +466,8 @@ class BulkDataGenerator:
             sub_id,
             noti_type.value,
             message,
-            False,
             created_time,
-            created_time
+            False,
         ])
 
         self.notification_seq += 1
@@ -535,8 +496,6 @@ class BulkDataGenerator:
         start_time = time.time()
 
         log_step("▶️  더미 데이터 생성 시작")
-
-        self.generate_master_data()
 
         total_family_members = self.generate_family()
         self.generate_remaining_users(total_family_members)

@@ -1,14 +1,16 @@
 import base64
 import random
 import time
+import hmac
+import hashlib
 from datetime import datetime, date, timedelta
 from typing import List
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
 from Crypto.Random import get_random_bytes
 
-from config.db_config import SECRET_KEY
-from .constants import *
+from config.db_config import HASH_KEY, SECRET_KEY
+from generator.constants import *
 
 # ======================================================
 # Time
@@ -36,6 +38,19 @@ def encrypt_aes(plain_text: str) -> str:
     cipher = AES.new(SECRET_KEY, AES.MODE_CBC, iv)
     encrypted = cipher.encrypt(pad(plain_text.encode('utf-8'), AES.block_size))
     return base64.b64encode(iv + encrypted).decode('utf-8')
+
+# ======================================================
+# Crypto
+# ======================================================
+
+def generate_blind_index(plain_text: str) -> str:
+    signature = hmac.new(
+        HASH_KEY,
+        plain_text.encode('utf-8'),
+        hashlib.sha256
+    ).digest()
+
+    return base64.b64encode(signature).decode('utf-8')
 
 # ======================================================
 # Random data generators

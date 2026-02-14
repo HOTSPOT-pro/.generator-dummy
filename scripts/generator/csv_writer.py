@@ -8,9 +8,6 @@ class CSVWriterManager:
         os.makedirs(OUTPUT_DIR, exist_ok=True)
 
         self.files = {
-            'plan': self._open('plan.csv'),
-            'app_blocked_service': self._open('app_blocked_service.csv'),
-            'block_policy': self._open('block_policy.csv'),
             'member': self._open('member.csv'),
             'social_account': self._open('social_account.csv'),
             'subscription': self._open('subscription.csv'),
