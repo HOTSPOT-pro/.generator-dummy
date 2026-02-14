@@ -1,0 +1,9 @@
+# Data generation
+faker>=18.0.0
+pycryptodome>=3.18.0
+
+# Environment
+python-dotenv>=1.0.0
+
+# PostgreSQL
+psycopg2-binary>=2.9.0
