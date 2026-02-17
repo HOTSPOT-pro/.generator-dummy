@@ -76,7 +76,7 @@ CREATE TABLE notification (
     is_read BOOLEAN NOT NULL DEFAULT FALSE,
     event_id VARCHAR(100) NOT NULL,
     PRIMARY KEY (notification_id),
-    CONSTRAINT uk_notification_event_id UNIQUE (event_id)
+    CONSTRAINT uk_notification_event_sub UNIQUE (event_id, sub_id)
 );
 
 CREATE TABLE family_apply (
