@@ -10,10 +10,10 @@ INSERT INTO plan (
 )
 VALUES
 (1, '5G 시그니처', -1, 'MONTH', FALSE, now(), now()),
-(2, '5G 스탠다드', 153600, 'MONTH', FALSE, now(), now()),
-(3, '5G 베이직+', 24576, 'MONTH', FALSE, now(), now()),
-(4, 'LTE 데이터 33', 1536, 'MONTH', FALSE, now(), now()),
-(5, 'LTE 다이렉트 45', 1024, 'DAY', FALSE, now(), now());
+(2, '5G 스탠다드', 157286400, 'MONTH', FALSE, now(), now()),
+(3, '5G 베이직+', 25165824, 'MONTH', FALSE, now(), now()),
+(4, 'LTE 데이터 33', 1572864, 'MONTH', FALSE, now(), now()),
+(5, 'LTE 다이렉트 45', 1048576, 'DAY', FALSE, now(), now());
 
 -- APP BLOCKED SERVICE
 INSERT INTO app_blocked_service (
