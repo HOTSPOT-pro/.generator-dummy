@@ -74,7 +74,9 @@ CREATE TABLE notification (
     notification_content VARCHAR(200) NOT NULL,
     created_time TIMESTAMP NOT NULL DEFAULT now(),
     is_read BOOLEAN NOT NULL DEFAULT FALSE,
-    PRIMARY KEY ("notification_id")
+    event_id VARCHAR(100) NOT NULL,
+    PRIMARY KEY (notification_id),
+    CONSTRAINT uk_notification_event_id UNIQUE (event_id)
 );
 
 CREATE TABLE family_apply (

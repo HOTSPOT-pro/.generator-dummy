@@ -3,6 +3,7 @@ import os
 import copy
 import random
 import time
+import uuid
 from typing import Optional, Dict, Any, List
 
 from generator.constants import *
@@ -460,14 +461,24 @@ class BulkDataGenerator:
     # 7️⃣ NOTIFIACTION 생성
     # ======================================================
 
-    def create_notification(self, sub_id: int, noti_type: NotificationType, message: str, created_time: datetime):
+    def create_notification(
+        self,
+        sub_id: int,
+        noti_type: NotificationType,
+        message: str,
+        created_time: datetime
+    ):
+        # 랜덤 event_id 생성
+        event_id = f"evt_{uuid.uuid4().hex}"
+
         self.csv.writer("notification").writerow([
-            self.notification_seq,
+            self.notification_seq,   # notification_id
             sub_id,
             noti_type.value,
             message,
             created_time,
-            False,
+            False,                   # is_read
+            event_id                 # 추가
         ])
 
         self.notification_seq += 1
