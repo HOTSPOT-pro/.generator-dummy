@@ -115,7 +115,7 @@ block_policies = [
             "name": "수면모드",
             "type": PolicyType.SCHEDULED,
             "snapshot": {
-                "days": ["MON","TUE","WED","THU","FRI","SAT","SUN"],
+                "days": ["MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY","SUNDAY"],
                 "startTime": "00:00",
                 "endTime": "07:00"
             }
@@ -131,7 +131,7 @@ block_policies = [
             "name": "수업 집중 모드",
             "type": PolicyType.SCHEDULED,
             "snapshot": {
-                "days": ["MON","TUE","WED","THU","FRI"],
+                "days": ["MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY"],
                 "startTime": "09:00",
                 "endTime": "14:00"
             }
