@@ -422,6 +422,8 @@ class BulkDataGenerator:
 
             if plan["amount"] == -1:
                 max_gift_gb = 5
+            elif plan["amount"] == int(1.5 * GB):
+                max_gift_gb = 0
             elif plan["period"] == "DAY":
                 max_gift_gb = 0
             else:

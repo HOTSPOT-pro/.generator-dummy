@@ -16,6 +16,8 @@
 ├── scripts/
 │   ├── run_all.py            # 통합 실행
 │   ├── db_loader.py          # DB 로딩
+│   ├── team_seed.py          # 팀원/가족 테스트 데이터 오버레이
+│   ├── team_fixture.json     # 팀원/가족 테스트 fixture
 │   └── generator/
 │       ├── generator_master.py
 │       ├── utils.py
@@ -30,7 +32,6 @@
 │   └── 04_create_indexes.sql
 ├── output/                   # 생성된 CSV
 ├── docs/
-│   ├── schema.md
 │   ├── data-rules.md
 │   ├── encryption.md
 │   └── loader-guide.md
@@ -63,6 +64,7 @@
 ✔ 데이터 선물 이벤트
 - 부모 → 자녀 데이터 선물
 - 요금제 기준 선물 용량 제한
+- 일 단위 요금제 / 1.5GB 요금제는 선물 데이터 생성 제외
 
 ✔ 개인정보 보호 설계
 - 전화번호 AES 암호화 저장
@@ -100,20 +102,23 @@ HASH_KEY=your_base64_hmac_key_here
 
 ---
 ## ▶ 실행 방법
-전체 실행 (CSV 생성 + DB 적재)
+더미 전체 실행 (CSV 생성 + DB 적재)
 ```
 python scripts/run_all.py
 ```
 
-CSV 생성만
+팀원/가족 테스트 데이터 오버레이
 ```
-python scripts/run_all.py --generate-only
+python scripts/team_seed.py
 ```
 
-DB 적재만
-```
-python scripts/run_all.py --load-only
-```
+> `scripts/team_fixture.json` 수정 후 실행  
+> 권장 순서: `python scripts/run_all.py` -> `python scripts/team_seed.py`
+
+### team_fixture.json 가이드
+- `members`: 팀원 사용자 정의
+- `create_social_account=false`: 소셜 계정 미생성(신규 소셜 가입 플로우 테스트용)
+- `families`: `member_key` 기준 가족 구성 정의
 
 ---
 ## 📊 생성 데이터 규모

@@ -10,7 +10,19 @@
 
 ## 실행
 
+더미 전체 실행 (CSV 생성 + DB 적재)
+```
 python scripts/run_all.py
+```
+
+팀원/가족 테스트 데이터 오버레이
+```
+python scripts/team_seed.py
+```
+
+권장 순서
+1. `python scripts/run_all.py`
+2. `python scripts/team_seed.py`
 
 ## 성능 팁
 
