@@ -31,6 +31,7 @@ class BulkDataGenerator:
         self.notification_allow_seq = 1
 
         self.phone_seq = 0
+        self.used_phones = set()
 
         self.subscription_member_map: Dict[int, str] = {}
         self.subscription_plan_map: Dict[int, Dict[str, Any]] = {}
@@ -47,6 +48,14 @@ class BulkDataGenerator:
     # ======================================================
     #  1️⃣ USER 생성
     # ======================================================
+
+    def generate_unique_phone(self) -> str:
+        while True:
+            n = random.randint(0, 99_999_999)
+            phone = f"010-{n // 10_000:04d}-{n % 10_000:04d}"
+            if phone not in self.used_phones:
+                self.used_phones.add(phone)
+                return phone
 
     def write_user(self, last_name: Optional[str], role_for_birth: FamilyRole):
 
@@ -96,10 +105,9 @@ class BulkDataGenerator:
 
         # SUBSCRIPTION
         plan_id = random.choice(list(PLANS.keys()))
-        phone_raw = generate_seq_phone(self.phone_seq)
+        phone_raw = self.generate_unique_phone()
         phone_enc = encrypt_aes(phone_raw)
         phone_hash = generate_blind_index(phone_raw)
-        self.phone_seq += 1
 
         sub_created = rand_datetime_between(member_created, now())
         is_locked = random.random() < 0.05
