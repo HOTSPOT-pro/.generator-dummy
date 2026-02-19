@@ -84,6 +84,7 @@ CREATE TABLE family_apply (
     requester_sub_id BIGINT NOT NULL,
     target_sub_id BIGINT NOT NULL,
     family_id BIGINT NOT NULL,
+    apply_type VARCHAR(10) NOT NULL,
     doc_url VARCHAR(255),
     status VARCHAR(20) NOT NULL,
     created_time TIMESTAMP NOT NULL DEFAULT now(),
