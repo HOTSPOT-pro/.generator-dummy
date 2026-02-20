@@ -152,3 +152,11 @@ CREATE TABLE present_data (
     PRIMARY KEY ("present_data_id")
 );
 
+CREATE TABLE outbox_event (
+    id UUID PRIMARY KEY,
+    aggregatetype VARCHAR(100) NOT NULL,
+    aggregateid VARCHAR(100) NOT NULL,
+    type VARCHAR(100) NOT NULL,
+    payload JSONB NOT NULL,
+    timestamp TIMESTAMP NOT NULL DEFAULT now()
+);

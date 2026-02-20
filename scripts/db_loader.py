@@ -16,6 +16,7 @@ SQL_FILES = [
     '01_drop_tables.sql',
     '02_create_tables.sql',
     '03_insert_master_data.sql',
+    '05_cdc_setup.sql'
 ]
 
 CSV_TABLE_MAPPING = [
