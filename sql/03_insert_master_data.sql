@@ -57,7 +57,7 @@ INSERT INTO block_policy (
     modified_time
 )
 VALUES
-(1,'수면모드','SCHEDULED','{"days":["MON","TUE","WED","THU","FRI","SAT","SUN"],"startTime":"00:00","endTime":"07:00"}',FALSE,now(),now()),
+(1,'수면모드','SCHEDULED','{"days":["MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY","SUNDAY"],"startTime":"00:00","endTime":"07:00"}',FALSE,now(),now()),
 (2,'방해 금지 모드','ONCE','{"durationMinutes":180}',FALSE,now(),now()),
-(3,'수업 집중 모드','SCHEDULED','{"days":["MON","TUE","WED","THU","FRI"],"startTime":"09:00","endTime":"14:00"}',FALSE,now(),now()),
+(3,'수업 집중 모드','SCHEDULED','{"days":["MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY"],"startTime":"09:00","endTime":"14:00"}',FALSE,now(),now()),
 (4,'시험 기간 집중 모드','ONCE','{"startTime":"06:00","endTime":"23:59"}',FALSE,now(),now());
