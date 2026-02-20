@@ -15,8 +15,7 @@ SQL_DIR = os.path.join(PROJECT_ROOT, 'sql')
 SQL_FILES = [
     '01_drop_tables.sql',
     '02_create_tables.sql',
-    '03_insert_master_data.sql',
-    '05_cdc_setup.sql'
+    '03_insert_master_data.sql'
 ]
 
 CSV_TABLE_MAPPING = [
