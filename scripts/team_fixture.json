@@ -1,0 +1,65 @@
+{
+  "members": [
+    {
+      "member_key": "owner_1",
+      "name": "김민준",
+      "birth": "850101",
+      "plan_id": 2,
+      "phone": "010-2457-1001",
+      "email": "team.owner1@example.com"
+    },
+    {
+      "member_key": "spouse_1",
+      "name": "김서연",
+      "birth": "870505",
+      "plan_id": 3,
+      "phone": "010-2457-1002",
+      "email": "team.spouse1@example.com"
+    },
+    {
+      "member_key": "child_1",
+      "name": "김하린",
+      "birth": "120403",
+      "plan_id": 5,
+      "phone": "010-2457-1003",
+      "email": "team.child1@example.com"
+    },
+    {
+      "member_key": "new_social_signup",
+      "name": "이도윤",
+      "birth": "000707",
+      "plan_id": 4,
+      "phone": "010-2457-1004",
+      "email": "team.newsocial@example.com"
+    }
+  ],
+  "families": [
+    {
+      "family_key": "family_alpha",
+      "priority_type": "FIFO",
+      "family_data_amount": 20971520,
+      "members": [
+        {
+          "member_key": "owner_1",
+          "family_role": "OWNER",
+          "priority": -1
+        },
+        {
+          "member_key": "spouse_1",
+          "family_role": "PARENT",
+          "priority": -1
+        },
+        {
+          "member_key": "child_1",
+          "family_role": "CHILD",
+          "priority": -1
+        },
+        {
+          "member_key": "new_social_signup",
+          "family_role": "CHILD",
+          "priority": -1
+        }
+      ]
+    }
+  ]
+}
