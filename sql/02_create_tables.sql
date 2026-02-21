@@ -137,6 +137,7 @@ CREATE TABLE block_policy (
 CREATE TABLE policy_sub (
     policy_sub_id BIGSERIAL NOT NULL,
     sub_id BIGINT NOT NULL REFERENCES subscription(sub_id),
+    policy_id BIGINT NOT NULL,
     date_snapshot JSON NOT NULL,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     created_time TIMESTAMP NOT NULL DEFAULT now(),

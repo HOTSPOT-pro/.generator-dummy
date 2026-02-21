@@ -307,6 +307,7 @@ class BulkDataGenerator:
             self.csv.writer("policy_sub").writerow([
                 self.policy_sub_seq,
                 sub_id,
+                block_policy_id,
                 json.dumps(snapshot, ensure_ascii=False),
                 False,
                 policy_created,
