@@ -34,7 +34,8 @@
 ├── docs/
 │   ├── data-rules.md
 │   ├── encryption.md
-│   └── loader-guide.md
+│   ├── loader-guide.md
+│   └── team-seed-guide.md
 ├── .env
 ├── .env.example
 └── requirements.txt
@@ -116,9 +117,9 @@ python scripts/team_seed.py
 > 권장 순서: `python scripts/run_all.py` -> `python scripts/team_seed.py`
 
 ### team_fixture.json 가이드
-- `members`: 팀원 사용자 정의
-- `create_social_account=false`: 소셜 계정 미생성(신규 소셜 가입 플로우 테스트용)
+- `members`: 팀원 사용자 정의 (social_account는 생성하지 않음)
 - `families`: `member_key` 기준 가족 구성 정의
+- 상세 작성 규칙: `docs/team-seed-guide.md`
 
 ---
 ## 📊 생성 데이터 규모
@@ -177,6 +178,7 @@ HMAC-SHA256(phone, HASH_KEY)
 | data-rules.md   | 데이터 생성 규칙 |
 | encryption.md   | 암호화 설계    |
 | loader-guide.md | DB 적재 가이드 |
+| team-seed-guide.md | 팀 시드/fixture 가이드 |
 
 ---
 ## 🛠 기술 스택
