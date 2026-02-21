@@ -30,7 +30,8 @@ CREATE TABLE social_account (
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     created_time TIMESTAMP NOT NULL DEFAULT now(),
     modified_time TIMESTAMP NOT NULL DEFAULT now(),
-    PRIMARY KEY ("social_account_id")
+    PRIMARY KEY ("social_account_id"),
+    CONSTRAINT uk_social_account_provider_social_id UNIQUE (provider, social_id)
 );
 
 CREATE TABLE subscription (
@@ -43,7 +44,8 @@ CREATE TABLE subscription (
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     created_time TIMESTAMP NOT NULL DEFAULT now(),
     modified_time TIMESTAMP NOT NULL DEFAULT now(),
-    PRIMARY KEY ("sub_id")
+    PRIMARY KEY ("sub_id"),
+    CONSTRAINT uk_subscription_member UNIQUE (member_id)
 );
 
 CREATE TABLE family (
@@ -64,7 +66,8 @@ CREATE TABLE family_sub (
     family_role VARCHAR(10) NOT NULL,
     priority INTEGER,
     data_limit BIGINT,
-    PRIMARY KEY ("family_sub_id")
+    PRIMARY KEY ("family_sub_id"),
+    CONSTRAINT uk_family_sub_sub UNIQUE (sub_id)
 );
 
 CREATE TABLE notification (
@@ -100,7 +103,8 @@ CREATE TABLE notification_allow (
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     created_time TIMESTAMP NOT NULL DEFAULT now(),
     modified_time TIMESTAMP NOT NULL DEFAULT now(),
-    PRIMARY KEY ("notification_allow_id")
+    PRIMARY KEY ("notification_allow_id"),
+    CONSTRAINT uk_notification_allow_sub_category UNIQUE (sub_id, notification_category)
 );
 
 CREATE TABLE app_blocked_service (
@@ -120,7 +124,8 @@ CREATE TABLE blocked_service_sub (
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     created_time TIMESTAMP NOT NULL DEFAULT now(),
     modified_time TIMESTAMP NOT NULL DEFAULT now(),
-    PRIMARY KEY ("blocked_service_sub_id")
+    PRIMARY KEY ("blocked_service_sub_id"),
+    CONSTRAINT uk_blocked_service_sub_sub_service UNIQUE (sub_id, blocked_service_id)
 );
 
 CREATE TABLE block_policy (
