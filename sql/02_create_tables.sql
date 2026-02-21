@@ -153,4 +153,3 @@ CREATE TABLE present_data (
     created_time TIMESTAMP NOT NULL DEFAULT now(),
     PRIMARY KEY ("present_data_id")
 );
-
