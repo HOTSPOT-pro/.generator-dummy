@@ -12,7 +12,7 @@ CREATE TABLE plan (
 CREATE TABLE member (
     member_id BIGSERIAL NOT NULL,
     name VARCHAR(10) NOT NULL,
-    birth VARCHAR(6) NOT NULL,
+    birth VARCHAR(6),
     status VARCHAR(10) NOT NULL,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     created_time TIMESTAMP NOT NULL DEFAULT now(),
@@ -37,7 +37,7 @@ CREATE TABLE social_account (
 CREATE TABLE subscription (
     sub_id BIGSERIAL NOT NULL,
     plan_id BIGINT NOT NULL REFERENCES plan(plan_id),
-    member_id BIGINT NOT NULL REFERENCES member(member_id),
+    member_id BIGINT REFERENCES member(member_id),
     phone_enc VARCHAR(255) NOT NULL,
     phone_hash VARCHAR(64) NOT NULL,
     is_locked BOOLEAN NOT NULL DEFAULT FALSE,
@@ -88,6 +88,7 @@ CREATE TABLE family_apply (
     target_sub_id BIGINT NOT NULL,
     family_id BIGINT NOT NULL,
     apply_type VARCHAR(10) NOT NULL,
+    target_family_role VARCHAR(10),
     doc_url VARCHAR(255),
     status VARCHAR(20) NOT NULL,
     created_time TIMESTAMP NOT NULL DEFAULT now(),
