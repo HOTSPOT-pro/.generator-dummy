@@ -272,10 +272,10 @@ class BulkDataGenerator:
 
         scheduled_ids = [
             pid for pid, p in self.block_policy_map.items()
-            if p["type"] == PolicyType.SCHEDULED
+            if p["type"] == PolicyType.SCHEDULED and p.get("is_active", True)
         ]
         if not scheduled_ids:
-            log_warn("SCHEDULED 정책이 없어 POLICY_SUB 생성 스킵")
+            log_warn("활성화된 SCHEDULED 정책이 없어 POLICY_SUB 생성 스킵")
             return
 
         created = 0

@@ -134,6 +134,7 @@ CREATE TABLE block_policy (
     policy_name VARCHAR(30) NOT NULL,
     policy_type VARCHAR(20) NOT NULL,
     policy_snapshot JSON NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     created_time TIMESTAMP NOT NULL DEFAULT now(),
     modified_time TIMESTAMP NOT NULL DEFAULT now(),

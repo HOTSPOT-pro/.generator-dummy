@@ -114,6 +114,7 @@ block_policies = [
         {
             "name": "수면모드",
             "type": PolicyType.SCHEDULED,
+            "is_active": True,
             "snapshot": {
                 "days": ["MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY","SUNDAY"],
                 "startTime": "00:00",
@@ -123,6 +124,7 @@ block_policies = [
         {
             "name": "방해 금지 모드",
             "type": PolicyType.ONCE,
+            "is_active": True,
             "snapshot": {
                 "durationMinutes": 180
             }
@@ -130,6 +132,7 @@ block_policies = [
         {
             "name": "수업 집중 모드",
             "type": PolicyType.SCHEDULED,
+            "is_active": True,
             "snapshot": {
                 "days": ["MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY"],
                 "startTime": "09:00",
@@ -139,6 +142,7 @@ block_policies = [
         {
             "name": "시험 기간 집중 모드",
             "type": PolicyType.ONCE,
+            "is_active": True,
             "snapshot": {
                 "startTime": "06:00",
                 "endTime": "23:59"
