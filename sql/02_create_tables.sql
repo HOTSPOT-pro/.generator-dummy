@@ -112,6 +112,7 @@ CREATE TABLE app_blocked_service (
     app_blocked_service_id BIGSERIAL NOT NULL,
     blocked_service_name VARCHAR(30) NOT NULL,
     blocked_service_code VARCHAR(30) NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     created_time TIMESTAMP NOT NULL DEFAULT now(),
     modified_time TIMESTAMP NOT NULL DEFAULT now(),
