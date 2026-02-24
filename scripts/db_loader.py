@@ -32,6 +32,9 @@ CSV_TABLE_MAPPING = [
 ]
 
 TABLE_PK_MAP = {
+    "plan": "plan_id",
+    "app_blocked_service": "app_blocked_service_id",
+    "block_policy": "block_policy_id",
     "member": "member_id",
     "social_account": "social_account_id",
     "subscription": "sub_id",
