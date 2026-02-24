@@ -74,6 +74,7 @@ CREATE TABLE notification (
     notification_id BIGSERIAL NOT NULL,
     sub_id BIGINT NOT NULL REFERENCES subscription(sub_id),
     notification_type VARCHAR(50) NOT NULL,
+    notification_title VARCHAR(20) NOT NULL,
     notification_content VARCHAR(200) NOT NULL,
     created_time TIMESTAMP NOT NULL DEFAULT now(),
     is_read BOOLEAN NOT NULL DEFAULT FALSE,
