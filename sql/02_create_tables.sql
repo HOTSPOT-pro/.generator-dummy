@@ -133,6 +133,7 @@ CREATE TABLE blocked_service_sub (
 CREATE TABLE block_policy (
     block_policy_id BIGSERIAL NOT NULL,
     policy_name VARCHAR(30) NOT NULL,
+    policy_description VARCHAR(255) NOT NULL DEFAULT '',
     policy_type VARCHAR(20) NOT NULL,
     policy_snapshot JSON NOT NULL,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
