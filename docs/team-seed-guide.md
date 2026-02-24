@@ -36,11 +36,12 @@
 
 ## members 필드
 
-- 필수: `member_key`, `name`, `birth`, `plan_id`, `phone`
-- 권장: `email` (온보딩 입력 매핑 시 사용 가능)
+- 필수: `member_key`, `plan_id`, `phone`
+- 선택: `name`, `birth`, `email`
 - `member_key`는 fixture 내부 식별자이며 중복되면 안 됩니다.
-- `birth` 형식은 `YYMMDD`입니다.
 - `phone`은 팀 번호 우선 적용 대상입니다.
+- `team_seed`는 USER-BE 온보딩 플로우에 맞춰 `member/social_account`를 생성하지 않습니다.
+- `name`, `birth`는 온보딩 요청/화면 테스트용 보조 데이터로만 사용합니다.
 
 ## families 필드
 
@@ -54,13 +55,13 @@
 
 ## team_seed가 반영하는 테이블
 
-- `member`
 - `subscription`
 - `notification_allow`
 - `family`
 - `family_sub`
 
-`social_account`, `policy_sub`, `blocked_service_sub`, `present_data`는 `team_seed`에서 생성/수정하지 않습니다.
+`member`, `social_account`, `policy_sub`, `blocked_service_sub`, `present_data`는 `team_seed`에서 생성/수정하지 않습니다.
+`subscription.member_id`는 `NULL`로 맞춰 온보딩 전 상태를 유지합니다.
 
 ## 전화번호 처리 규칙
 

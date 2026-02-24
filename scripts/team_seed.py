@@ -125,11 +125,11 @@ def ensure_team_phone_priority(
     )
 
 
-def find_member_by_phone(cur, phone: str) -> Optional[int]:
+def find_subscription_by_phone(cur, phone: str) -> Optional[int]:
     phone_hash = generate_blind_index(phone)
     cur.execute(
         """
-        SELECT member_id
+        SELECT sub_id
         FROM subscription
         WHERE phone_hash = %s
         ORDER BY sub_id ASC
@@ -141,57 +141,17 @@ def find_member_by_phone(cur, phone: str) -> Optional[int]:
     return row[0] if row else None
 
 
-def upsert_member(cur, payload: Dict[str, Any]) -> int:
-    phone = payload.get("phone")
-    member_id = find_member_by_phone(cur, phone) if phone else None
-
-    ts = now()
-    if member_id is None:
-        cur.execute(
-            """
-            INSERT INTO member (name, birth, status, is_deleted, created_time, modified_time)
-            VALUES (%s, %s, 'APPROVED', FALSE, %s, %s)
-            RETURNING member_id
-            """,
-            (payload["name"], payload["birth"], ts, ts),
-        )
-        member_id = cur.fetchone()[0]
-        print(f"  [INSERT] member: {payload['member_key']} -> {member_id}")
-    else:
-        cur.execute(
-            """
-            UPDATE member
-            SET name = %s, birth = %s, modified_time = %s
-            WHERE member_id = %s
-            """,
-            (payload["name"], payload["birth"], ts, member_id),
-        )
-        print(f"  [UPDATE] member: {payload['member_key']} -> {member_id}")
-
-    return member_id
-
-
-def upsert_subscription(cur, member_id: int, payload: Dict[str, Any], phone_offset: int) -> int:
-    cur.execute(
-        """
-        SELECT sub_id
-        FROM subscription
-        WHERE member_id = %s
-        ORDER BY sub_id ASC
-        LIMIT 1
-        """,
-        (member_id,),
-    )
-    row = cur.fetchone()
+def upsert_subscription(cur, payload: Dict[str, Any], phone_offset: int) -> int:
     plan_id = int(payload.get("plan_id", 3))
     ts = now()
 
-    sub_id = row[0] if row else None
     phone_raw = payload.get("phone")
-    if phone_raw:
-        ensure_team_phone_priority(cur, phone_raw, payload["member_key"], phone_offset, sub_id)
-    else:
-        phone_raw = generate_team_phone(cur, phone_offset, exclude_sub_id=sub_id)
+    if not phone_raw:
+        phone_raw = generate_team_phone(cur, phone_offset)
+    sub_id = find_subscription_by_phone(cur, phone_raw)
+    if sub_id is None:
+        ensure_team_phone_priority(cur, phone_raw, payload["member_key"], phone_offset, None)
+
     phone_enc = encrypt_aes(phone_raw)
     phone_hash = generate_blind_index(phone_raw)
 
@@ -199,12 +159,12 @@ def upsert_subscription(cur, member_id: int, payload: Dict[str, Any], phone_offs
         cur.execute(
             """
             UPDATE subscription
-            SET plan_id = %s, phone_enc = %s, phone_hash = %s, modified_time = %s, is_deleted = FALSE
+            SET plan_id = %s, member_id = NULL, phone_enc = %s, phone_hash = %s, modified_time = %s, is_deleted = FALSE
             WHERE sub_id = %s
             """,
             (plan_id, phone_enc, phone_hash, ts, sub_id),
         )
-        print(f"  [UPDATE] subscription: {payload['member_key']} -> {sub_id}")
+        print(f"  [UPDATE] subscription(pre-onboarding): {payload['member_key']} -> {sub_id}")
         return sub_id
 
     cur.execute(
@@ -215,10 +175,10 @@ def upsert_subscription(cur, member_id: int, payload: Dict[str, Any], phone_offs
         VALUES (%s, %s, %s, %s, FALSE, FALSE, %s, %s)
         RETURNING sub_id
         """,
-        (plan_id, member_id, phone_enc, phone_hash, ts, ts),
+        (plan_id, None, phone_enc, phone_hash, ts, ts),
     )
     sub_id = cur.fetchone()[0]
-    print(f"  [INSERT] subscription: {payload['member_key']} -> {sub_id}")
+    print(f"  [INSERT] subscription(pre-onboarding): {payload['member_key']} -> {sub_id}")
     return sub_id
 
 
@@ -381,16 +341,13 @@ def main():
     try:
         conn.autocommit = False
 
-        member_map: Dict[str, int] = {}
         sub_map: Dict[str, int] = {}
 
         with conn.cursor() as cur:
             for idx, member in enumerate(members):
-                member_id = upsert_member(cur, member)
-                sub_id = upsert_subscription(cur, member_id, member, idx)
+                sub_id = upsert_subscription(cur, member, idx)
                 ensure_notification_allow(cur, sub_id)
 
-                member_map[member["member_key"]] = member_id
                 sub_map[member["member_key"]] = sub_id
 
             for fam in families:
