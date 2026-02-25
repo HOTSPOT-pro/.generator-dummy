@@ -468,7 +468,7 @@ class BulkDataGenerator:
 
         log_done(f"PRESENT_DATA 생성 완료 ({created:,}건)")
 
-    # ======================================================
+   # ======================================================
     # 7️⃣ NOTIFIACTION 생성
     # ======================================================
 
@@ -482,14 +482,18 @@ class BulkDataGenerator:
         # 랜덤 event_id 생성
         event_id = f"evt_{uuid.uuid4().hex}"
 
+        # 알림 제목을 생성 (noti_type이나 기획에 맞게 수정하셔도 됩니다)
+        title = "알림이 도착했습니다." 
+
         self.csv.writer("notification").writerow([
-            self.notification_seq,   # notification_id
-            sub_id,
-            noti_type.value,
-            message,
-            created_time,
-            False,                   # is_read
-            event_id                 # 추가
+            self.notification_seq,   # 1. notification_id
+            sub_id,                  # 2. sub_id
+            noti_type.value,         # 3. notification_type
+            title,                   # 4. notification_title (💡 새로 추가됨!)
+            message,                 # 5. notification_content
+            created_time,            # 6. created_time
+            False,                   # 7. is_read
+            event_id                 # 8. event_id
         ])
 
         self.notification_seq += 1
