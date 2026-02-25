@@ -41,183 +41,26 @@
       "email": "40food@naver.com"
     },
     {
-      "member_key": "gd_spouse",
-      "name": "이하영",
-      "birth": "020303",
+      "member_key": "jiyeon_1",
+      "name": "채지연",
+      "birth": "001118",
       "plan_id": 3,
-      "phone": "010-7001-0001",
-      "email": "gd.spouse@example.com"
-    },
-    {
-      "member_key": "gd_child1",
-      "name": "이서준",
-      "birth": "150505",
-      "plan_id": 5,
-      "phone": "010-7001-0002",
-      "email": "gd.child1@example.com"
-    },
-    {
-      "member_key": "gd_child2",
-      "name": "이도윤",
-      "birth": "170707",
-      "plan_id": 5,
-      "phone": "010-7001-0003",
-      "email": "gd.child2@example.com"
-    },
-    {
-      "member_key": "gm_spouse",
-      "name": "김민지",
-      "birth": "030303",
-      "plan_id": 3,
-      "phone": "010-7002-0001",
-      "email": "gm.spouse@example.com"
-    },
-    {
-      "member_key": "gm_child1",
-      "name": "김도현",
-      "birth": "160606",
-      "plan_id": 5,
-      "phone": "010-7002-0002",
-      "email": "gm.child1@example.com"
-    },
-    {
-      "member_key": "gm_child2",
-      "name": "김유진",
-      "birth": "180808",
-      "plan_id": 5,
-      "phone": "010-7002-0003",
-      "email": "gm.child2@example.com"
-    },
-
-    {
-      "member_key": "jae_spouse",
-      "name": "박지은",
-      "birth": "990909",
-      "plan_id": 3,
-      "phone": "010-7003-0001",
-      "email": "jae.spouse@example.com"
-    },
-    {
-      "member_key": "jae_child1",
-      "name": "이현우",
-      "birth": "140404",
-      "plan_id": 5,
-      "phone": "010-7003-0002",
-      "email": "jae.child1@example.com"
-    },
-    {
-      "member_key": "jae_child2",
-      "name": "이시윤",
-      "birth": "190909",
-      "plan_id": 5,
-      "phone": "010-7003-0003",
-      "email": "jae.child2@example.com"
-    },
-
-    {
-      "member_key": "hs_spouse",
-      "name": "정수민",
-      "birth": "010101",
-      "plan_id": 3,
-      "phone": "010-7004-0001",
-      "email": "hs.spouse@example.com"
-    },
-    {
-      "member_key": "hs_child1",
-      "name": "신지호",
-      "birth": "150101",
-      "plan_id": 5,
-      "phone": "010-7004-0002",
-      "email": "hs.child1@example.com"
-    },
-    {
-      "member_key": "hs_child2",
-      "name": "신아린",
-      "birth": "170202",
-      "plan_id": 5,
-      "phone": "010-7004-0003",
-      "email": "hs.child2@example.com"
-    },
-
-    {
-      "member_key": "sy_spouse",
-      "name": "최은지",
-      "birth": "010303",
-      "plan_id": 3,
-      "phone": "010-7005-0001",
-      "email": "sy.spouse@example.com"
-    },
-    {
-      "member_key": "sy_child1",
-      "name": "박준호",
-      "birth": "160202",
-      "plan_id": 5,
-      "phone": "010-7005-0002",
-      "email": "sy.child1@example.com"
-    },
-    {
-      "member_key": "sy_child2",
-      "name": "박서연",
-      "birth": "180303",
-      "plan_id": 5,
-      "phone": "010-7005-0003",
-      "email": "sy.child2@example.com"
+      "phone": "010-2795-1892",
+      "email": "xhdrp@sookmyung.ac.kr"
     }
   ],
   "families": [
     {
-      "family_key": "family_gd",
+      "family_key": "family_main",
       "priority_type": "FIFO",
       "family_data_amount": 20971520,
       "members": [
         { "member_key": "gyudong_1", "family_role": "OWNER", "priority": -1 },
-        { "member_key": "gd_spouse", "family_role": "PARENT", "priority": -1 },
-        { "member_key": "gd_child1", "family_role": "CHILD", "priority": -1 },
-        { "member_key": "gd_child2", "family_role": "CHILD", "priority": -1 }
-      ]
-    },
-    {
-      "family_key": "family_gm",
-      "priority_type": "FIFO",
-      "family_data_amount": 20971520,
-      "members": [
-        { "member_key": "kyungmin_1", "family_role": "OWNER", "priority": -1 },
-        { "member_key": "gm_spouse", "family_role": "PARENT", "priority": -1 },
-        { "member_key": "gm_child1", "family_role": "CHILD", "priority": -1 },
-        { "member_key": "gm_child2", "family_role": "CHILD", "priority": -1 }
-      ]
-    },
-    {
-      "family_key": "family_jae",
-      "priority_type": "FIFO",
-      "family_data_amount": 20971520,
-      "members": [
-        { "member_key": "jae_1", "family_role": "OWNER", "priority": -1 },
-        { "member_key": "jae_spouse", "family_role": "PARENT", "priority": -1 },
-        { "member_key": "jae_child1", "family_role": "CHILD", "priority": -1 },
-        { "member_key": "jae_child2", "family_role": "CHILD", "priority": -1 }
-      ]
-    },
-    {
-      "family_key": "family_hs",
-      "priority_type": "FIFO",
-      "family_data_amount": 20971520,
-      "members": [
-        { "member_key": "hyeongseo_1", "family_role": "OWNER", "priority": -1 },
-        { "member_key": "hs_spouse", "family_role": "PARENT", "priority": -1 },
-        { "member_key": "hs_child1", "family_role": "CHILD", "priority": -1 },
-        { "member_key": "hs_child2", "family_role": "CHILD", "priority": -1 }
-      ]
-    },
-    {
-      "family_key": "family_sy",
-      "priority_type": "FIFO",
-      "family_data_amount": 20971520,
-      "members": [
-        { "member_key": "seungyeon_1", "family_role": "OWNER", "priority": -1 },
-        { "member_key": "sy_spouse", "family_role": "PARENT", "priority": -1 },
-        { "member_key": "sy_child1", "family_role": "CHILD", "priority": -1 },
-        { "member_key": "sy_child2", "family_role": "CHILD", "priority": -1 }
+        { "member_key": "kyungmin_1", "family_role": "PARENT", "priority": -1 },
+        { "member_key": "jae_1", "family_role": "PARENT", "priority": -1 },
+        { "member_key": "hyeongseo_1", "family_role": "CHILD", "priority": -1 },
+        { "member_key": "seungyeon_1", "family_role": "CHILD", "priority": -1 },
+        { "member_key": "jiyeon_1", "family_role": "CHILD", "priority": -1 }
       ]
     }
   ]
