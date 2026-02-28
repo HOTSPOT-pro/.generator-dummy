@@ -1,3 +1,9 @@
+from pathlib import Path
+from dotenv import load_dotenv
+
+# 프로젝트 루트(.env 위치) 로드
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")
+
 """
 통합 실행 스크립트
 1. 더미 데이터 생성 (CSV)

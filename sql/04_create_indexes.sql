@@ -21,3 +21,8 @@ ON blocked_service_sub(sub_id);
 
 CREATE INDEX IF NOT EXISTS idx_present_data_target
 ON present_data(target_sub_id);
+
+
+CREATE UNIQUE INDEX uk_notification_allow_sub_category_active
+    ON notification_allow (sub_id, notification_category)
+    WHERE is_deleted = false;

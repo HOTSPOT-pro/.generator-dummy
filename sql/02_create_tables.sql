@@ -105,8 +105,7 @@ CREATE TABLE notification_allow (
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     created_time TIMESTAMP NOT NULL DEFAULT now(),
     modified_time TIMESTAMP NOT NULL DEFAULT now(),
-    PRIMARY KEY ("notification_allow_id"),
-    CONSTRAINT uk_notification_allow_sub_category UNIQUE (sub_id, notification_category)
+    PRIMARY KEY (notification_allow_id)
 );
 
 CREATE TABLE app_blocked_service (
@@ -162,4 +161,13 @@ CREATE TABLE present_data (
     data_amount BIGINT NOT NULL,
     created_time TIMESTAMP NOT NULL DEFAULT now(),
     PRIMARY KEY ("present_data_id")
+);
+
+CREATE TABLE notification_outbox_event (
+    id UUID NOT NULL,
+    aggregatetype VARCHAR(100) NOT NULL,
+    aggregateid   VARCHAR(100) NOT NULL,
+    type          VARCHAR(100) NOT NULL,
+    payload       TEXT NOT NULL,
+    PRIMARY KEY (id)
 );
