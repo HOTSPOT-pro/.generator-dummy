@@ -8,6 +8,13 @@
 4. COPY CSV
 5. CREATE INDEX
 
+## 최근 스키마 변경 반영
+
+- 가족 신청은 `family_apply` + `family_apply_target` 구조로 분리되었습니다.
+- 가족 구성원 삭제 예약 반영을 위한 `family_remove_schedule` 테이블이 추가되었습니다.
+- 정책 매핑은 `policy_sub.block_policy_id` 기준으로 관리됩니다.
+- 로더는 테이블 단위 커밋을 수행하며, deadlock 감지 시 최대 3회 자동 재시도합니다.
+
 ## 실행
 
 더미 전체 실행 (CSV 생성 + DB 적재)

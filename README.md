@@ -61,6 +61,14 @@
 - 시간 차단 정책 적용
 - 앱 서비스 차단
 - 정책 적용 알림 자동 생성
+- 정책 테이블(`block_policy`)에서 관리자/가족 대표 정책 통합 관리
+- 정책-구성원 매핑(`policy_sub`) 기반 적용 관리
+
+✔ 가족 신청/삭제 처리 구조
+- 가족 신청(`family_apply`)은 ADD/REMOVE/CREATE 요청을 관리
+- 신청 대상자(`family_apply_target`)는 다건 대상자 매핑 지원
+- 가족 구성원 삭제는 즉시 반영하지 않고 스케줄(`family_remove_schedule`) 기반 반영
+- 더미 생성 시 `CREATE` 신청은 비가족 사용자 기준 5~10건, 상태는 모두 `PENDING`
 
 ✔ 데이터 선물 이벤트
 - 부모 → 자녀 데이터 선물
@@ -129,6 +137,9 @@ python scripts/team_seed.py
 | subscription        | 1,000,000  |
 | family              | 250,000    |
 | family_sub          | ~860,000   |
+| family_apply        | 5~10       |
+| family_apply_target | ~10~30     |
+| block_policy        | 마스터 + 정책 적용 건수만큼 증가 |
 | notification_allow  | 4,000,000  |
 | blocked_service_sub | ~650,000   |
 | policy_sub          | ~200,000   |
