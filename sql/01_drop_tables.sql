@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS family_apply_target CASCADE;
+DROP TABLE IF EXISTS family_remove_schedule CASCADE;
 DROP TABLE IF EXISTS policy_sub CASCADE;
 DROP TABLE IF EXISTS blocked_service_sub CASCADE;
 DROP TABLE IF EXISTS present_data CASCADE;

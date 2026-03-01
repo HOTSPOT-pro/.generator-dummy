@@ -52,6 +52,7 @@ INSERT INTO block_policy (
     block_policy_id,
     policy_name,
     policy_description,
+    family_id,
     policy_type,
     policy_snapshot,
     is_active,
@@ -60,7 +61,7 @@ INSERT INTO block_policy (
     modified_time
 )
 VALUES
-(1,'수면모드','매일 지정한 수면 시간 동안 앱 사용을 제한해 규칙적인 생활을 돕는 정책입니다.','SCHEDULED','{"days":["MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY","SUNDAY"],"startTime":"00:00","endTime":"07:00"}',TRUE,FALSE,now(),now()),
-(2,'방해 금지 모드','일정 시간 동안 즉시 앱 사용을 차단해 집중이 필요한 순간을 지원하는 정책입니다.','ONCE','{"durationMinutes":180}',TRUE,FALSE,now(),now()),
-(3,'수업 집중 모드','평일 수업 시간에 맞춰 앱 사용을 자동 제한해 학습 집중도를 높이는 정책입니다.','SCHEDULED','{"days":["MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY"],"startTime":"09:00","endTime":"14:00"}',TRUE,FALSE,now(),now()),
-(4,'시험 기간 집중 모드','시험 대비 기간에 장시간 앱 사용을 제한해 학습 몰입을 강화하는 정책입니다.','ONCE','{"startTime":"06:00","endTime":"23:59"}',TRUE,FALSE,now(),now());
+(1,'수면모드','매일 지정한 수면 시간 동안 앱 사용을 제한해 규칙적인 생활을 돕는 정책입니다.',NULL,'SCHEDULED','{"days":["MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY","SUNDAY"],"startTime":"00:00","endTime":"07:00"}',TRUE,FALSE,now(),now()),
+(2,'방해 금지 모드','일정 시간 동안 즉시 앱 사용을 차단해 집중이 필요한 순간을 지원하는 정책입니다.',NULL,'ONCE','{"durationMinutes":180}',TRUE,FALSE,now(),now()),
+(3,'수업 집중 모드','평일 수업 시간에 맞춰 앱 사용을 자동 제한해 학습 집중도를 높이는 정책입니다.',NULL,'SCHEDULED','{"days":["MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY"],"startTime":"09:00","endTime":"14:00"}',TRUE,FALSE,now(),now()),
+(4,'시험 기간 집중 모드','시험 대비 기간에 장시간 앱 사용을 제한해 학습 몰입을 강화하는 정책입니다.',NULL,'ONCE','{"startTime":"06:00","endTime":"23:59"}',TRUE,FALSE,now(),now());

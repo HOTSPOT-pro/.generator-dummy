@@ -11,7 +11,19 @@ CREATE INDEX IF NOT EXISTS idx_policy_sub_sub
 ON policy_sub(sub_id);
 
 CREATE INDEX IF NOT EXISTS idx_policy_sub_policy
-ON policy_sub(policy_id);
+ON policy_sub(block_policy_id);
+
+CREATE INDEX IF NOT EXISTS idx_family_apply_requester_status
+ON family_apply(requester_sub_id, status);
+
+CREATE INDEX IF NOT EXISTS idx_family_apply_target_apply
+ON family_apply_target(family_apply_id);
+
+CREATE INDEX IF NOT EXISTS idx_family_apply_target_sub
+ON family_apply_target(target_sub_id);
+
+CREATE INDEX IF NOT EXISTS idx_family_remove_schedule_status_date
+ON family_remove_schedule(status, schedule_date);
 
 CREATE INDEX IF NOT EXISTS idx_notification_sub
 ON notification(sub_id);

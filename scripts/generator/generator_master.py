@@ -1,6 +1,5 @@
 import json
 import os
-import copy
 import random
 import time
 import uuid
@@ -23,7 +22,11 @@ class BulkDataGenerator:
         self.social_seq = 1
         self.family_seq = 1
         self.family_sub_seq = 1
-        self.block_policy_seq = 1
+        self.family_apply_seq = 1
+        self.family_apply_target_seq = 1
+        # 1~N은 sql/03_insert_master_data.sql의 관리자 템플릿 정책이 사용
+        # 더미에서 생성하는 가족별 정책은 그 다음 ID부터 사용
+        self.block_policy_seq = len(block_policies) + 1
         self.policy_sub_seq = 1
         self.blocked_service_sub_seq = 1
         self.present_data_seq = 1
@@ -37,6 +40,7 @@ class BulkDataGenerator:
         self.subscription_plan_map: Dict[int, Dict[str, Any]] = {}
         self.subscription_created_map: Dict[int, datetime] = {}
         self.family_subscriptions: List[Dict[str, Any]] = []
+        self.non_family_subscriptions: List[int] = []
 
         self.block_policy_map = {
             idx + 1: p for idx, p in enumerate(block_policies)
@@ -256,15 +260,84 @@ class BulkDataGenerator:
         remaining = TOTAL_USERS - already_created_members
 
         for i in range(remaining):
-            self.write_user(None, FamilyRole.PARENT)
+            sub_id = self.write_user(None, FamilyRole.PARENT)
+            self.non_family_subscriptions.append(sub_id)
 
             if (i + 1) % 100000 == 0:
                 log_progress("NON_FAMILY", i + 1, remaining)
 
         log_done(f"비가족 사용자 생성 완료 ({remaining:,}명)")
+
+    # ======================================================
+    #  4️⃣ FAMILY_APPLY(CREATE) 생성
+    # ======================================================
+    
+    def generate_family_apply_create(self):
+        log_step("FAMILY_APPLY(CREATE) 생성")
+
+        candidates = self.non_family_subscriptions[:]
+        if len(candidates) < 2:
+            log_warn("비가족 사용자 부족으로 FAMILY_APPLY 생성 스킵")
+            return
+
+        random.shuffle(candidates)
+        max_apply = min(random.randint(5, 10), len(candidates))
+        created_apply = 0
+        created_target = 0
+
+        idx = 0
+        # 가족 생성 신청은 최소 2명(요청자 포함)이어야 한다.
+        while created_apply < max_apply and idx < (len(candidates) - 1):
+            requester_sub_id = candidates[idx]
+            idx += 1
+
+            apply_created = rand_datetime_between(
+                self.subscription_created_map[requester_sub_id],
+                now()
+            )
+
+            status = "PENDING"
+
+            family_apply_id = self.family_apply_seq
+            self.csv.writer("family_apply").writerow([
+                family_apply_id,
+                requester_sub_id,
+                "\\N",      # CREATE 신청은 family_id 없음
+                "CREATE",
+                "\\N",
+                status,
+                apply_created,
+                apply_created
+            ])
+            self.family_apply_seq += 1
+            created_apply += 1
+
+            # 요청자 포함 2~3명 타겟
+            target_count = min(
+                random.choices([2, 3], weights=[80, 20], k=1)[0],
+                len(candidates) - idx + 1
+            )
+            target_pool = [requester_sub_id]
+
+            while len(target_pool) < target_count and idx < len(candidates):
+                target_pool.append(candidates[idx])
+                idx += 1
+
+            for t_idx, target_sub_id in enumerate(target_pool):
+                target_role = "OWNER" if t_idx == 0 else random.choice(["PARENT", "CHILD"])
+                self.csv.writer("family_apply_target").writerow([
+                    self.family_apply_target_seq,
+                    family_apply_id,
+                    target_sub_id,
+                    target_role
+                ])
+                self.family_apply_target_seq += 1
+                created_target += 1
+
+        log_done(f"FAMILY_APPLY 생성 완료 (신청 {created_apply:,}건 / 대상 {created_target:,}건)")
     
     # ======================================================
-    #  4️⃣ POLICY_SUB 생성
+    #  5️⃣ POLICY_SUB 생성
     # ======================================================
     
     def generate_policy_sub(self):
@@ -282,6 +355,7 @@ class BulkDataGenerator:
 
         for item in self.family_subscriptions:
             sub_id = item["sub_id"]
+            family_id = item["family_id"]
             role = item["role"]
 
             if role == FamilyRole.CHILD:
@@ -292,34 +366,44 @@ class BulkDataGenerator:
             if policy_type is None:
                 continue
 
-            block_policy_id = random.choice(scheduled_ids)
-            base = self.block_policy_map[block_policy_id]
+            template_policy_id = random.choice(scheduled_ids)
+            base = self.block_policy_map[template_policy_id]
 
             sub_created = self.subscription_created_map[sub_id]
             policy_created = rand_datetime_between(sub_created, now())
 
-            snapshot = {
-                "policyName": base["name"],
-                "policyType": base["type"].value,
-                "data": copy.deepcopy(base["snapshot"])
-            }
-
-            self.csv.writer("policy_sub").writerow([
-                self.policy_sub_seq,
-                sub_id,
-                block_policy_id,
-                json.dumps(snapshot, ensure_ascii=False),
+            # 템플릿을 그대로 쓰더라도 가족별 신규 정책 ID를 발급해 매핑한다.
+            family_policy_id = self.block_policy_seq
+            is_policy_active = random.random() < 0.85
+            self.csv.writer("block_policy").writerow([
+                family_policy_id,
+                base["name"],
+                base.get("description", ""),
+                family_id,
+                base["type"].value,
+                json.dumps(base["snapshot"], ensure_ascii=False),
+                True,
                 False,
                 policy_created,
                 policy_created
             ])
+            self.block_policy_seq += 1
 
-            self.create_notification(
-                sub_id=sub_id,
-                noti_type=NotificationType.TIME_WINDOW_POLICY_APPLIED,
-                message=f"“{base['name']}” 시간 차단 정책이 적용되었습니다",
-                created_time=policy_created
-            )
+            self.csv.writer("policy_sub").writerow([
+                self.policy_sub_seq,
+                sub_id,
+                family_policy_id,
+                is_policy_active,
+                policy_created,
+                policy_created
+            ])
+            if is_policy_active:
+                self.create_notification(
+                    sub_id=sub_id,
+                    noti_type=NotificationType.TIME_WINDOW_POLICY_APPLIED,
+                    message=f"“{base['name']}” 시간 차단 정책이 적용되었습니다",
+                    created_time=policy_created
+                )
 
             self.policy_sub_seq += 1
             created += 1
@@ -328,7 +412,7 @@ class BulkDataGenerator:
     
 
     # ======================================================
-    #  5️⃣ BLOCKED_SERVICE_SUB 생성
+    #  6️⃣ BLOCKED_SERVICE_SUB 생성
     # ======================================================
 
     def generate_blocked_service_sub(self):
@@ -385,7 +469,7 @@ class BulkDataGenerator:
         log_done(f"BLOCKED_SERVICE_SUB 생성 완료 ({created:,}건)")
 
     # ======================================================
-    # 6️⃣ PRESENT_DATA 생성
+    # 7️⃣ PRESENT_DATA 생성
     # ======================================================
 
     def generate_present_data(self):
@@ -469,7 +553,7 @@ class BulkDataGenerator:
         log_done(f"PRESENT_DATA 생성 완료 ({created:,}건)")
 
    # ======================================================
-    # 7️⃣ NOTIFIACTION 생성
+    # 8️⃣ NOTIFIACTION 생성
     # ======================================================
 
     def create_notification(
@@ -499,7 +583,7 @@ class BulkDataGenerator:
         self.notification_seq += 1
 
     # ======================================================
-    # 8️⃣ MAIN 실행
+    # 9️⃣ MAIN 실행
     # ======================================================
 
     def print_summary(self):
@@ -525,6 +609,7 @@ class BulkDataGenerator:
 
         total_family_members = self.generate_family()
         self.generate_remaining_users(total_family_members)
+        self.generate_family_apply_create()
 
         self.generate_policy_sub()
         self.generate_blocked_service_sub()

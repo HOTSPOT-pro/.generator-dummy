@@ -113,6 +113,7 @@ PREFERRED_CODES = [
 block_policies = [
         {
             "name": "수면모드",
+            "description": "매일 지정한 수면 시간 동안 앱 사용을 제한해 규칙적인 생활을 돕는 정책입니다.",
             "type": PolicyType.SCHEDULED,
             "is_active": True,
             "snapshot": {
@@ -123,6 +124,7 @@ block_policies = [
         },
         {
             "name": "방해 금지 모드",
+            "description": "일정 시간 동안 즉시 앱 사용을 차단해 집중이 필요한 순간을 지원하는 정책입니다.",
             "type": PolicyType.ONCE,
             "is_active": True,
             "snapshot": {
@@ -131,6 +133,7 @@ block_policies = [
         },
         {
             "name": "수업 집중 모드",
+            "description": "평일 수업 시간에 맞춰 앱 사용을 자동 제한해 학습 집중도를 높이는 정책입니다.",
             "type": PolicyType.SCHEDULED,
             "is_active": True,
             "snapshot": {
@@ -141,6 +144,7 @@ block_policies = [
         },
         {
             "name": "시험 기간 집중 모드",
+            "description": "시험 대비 기간에 장시간 앱 사용을 제한해 학습 몰입을 강화하는 정책입니다.",
             "type": PolicyType.ONCE,
             "is_active": True,
             "snapshot": {

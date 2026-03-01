@@ -85,16 +85,33 @@ CREATE TABLE notification (
 
 CREATE TABLE family_apply (
     family_apply_id BIGSERIAL NOT NULL,
-    requester_sub_id BIGINT NOT NULL,
-    target_sub_id BIGINT NOT NULL,
-    family_id BIGINT NOT NULL,
+    requester_sub_id BIGINT NOT NULL REFERENCES subscription(sub_id),
+    family_id BIGINT,
     apply_type VARCHAR(10) NOT NULL,
-    target_family_role VARCHAR(10),
     doc_url VARCHAR(255),
     status VARCHAR(20) NOT NULL,
     created_time TIMESTAMP NOT NULL DEFAULT now(),
     modified_time TIMESTAMP NOT NULL DEFAULT now(),
     PRIMARY KEY ("family_apply_id")
+);
+
+CREATE TABLE family_apply_target (
+    family_apply_target_id BIGSERIAL NOT NULL,
+    family_apply_id BIGINT NOT NULL REFERENCES family_apply(family_apply_id),
+    target_sub_id BIGINT NOT NULL REFERENCES subscription(sub_id),
+    target_family_role VARCHAR(10) NOT NULL,
+    PRIMARY KEY ("family_apply_target_id")
+);
+
+CREATE TABLE family_remove_schedule (
+    family_remove_schedule_id BIGSERIAL NOT NULL,
+    target_sub_id BIGINT NOT NULL REFERENCES subscription(sub_id),
+    family_id BIGINT NOT NULL REFERENCES family(family_id),
+    status VARCHAR(20) NOT NULL,
+    schedule_date DATE NOT NULL,
+    created_time TIMESTAMP NOT NULL DEFAULT now(),
+    modified_time TIMESTAMP NOT NULL DEFAULT now(),
+    PRIMARY KEY ("family_remove_schedule_id")
 );
 
 CREATE TABLE notification_allow (
@@ -134,6 +151,7 @@ CREATE TABLE block_policy (
     block_policy_id BIGSERIAL NOT NULL,
     policy_name VARCHAR(30) NOT NULL,
     policy_description VARCHAR(255) NOT NULL DEFAULT '',
+    family_id BIGINT,
     policy_type VARCHAR(20) NOT NULL,
     policy_snapshot JSON NOT NULL,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -146,9 +164,8 @@ CREATE TABLE block_policy (
 CREATE TABLE policy_sub (
     policy_sub_id BIGSERIAL NOT NULL,
     sub_id BIGINT NOT NULL REFERENCES subscription(sub_id),
-    policy_id BIGINT NOT NULL,
-    date_snapshot JSON NOT NULL,
-    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    block_policy_id BIGINT NOT NULL REFERENCES block_policy(block_policy_id),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_time TIMESTAMP NOT NULL DEFAULT now(),
     modified_time TIMESTAMP NOT NULL DEFAULT now(),
     PRIMARY KEY ("policy_sub_id")
