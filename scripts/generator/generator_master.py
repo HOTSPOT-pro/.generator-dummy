@@ -543,6 +543,14 @@ class BulkDataGenerator:
             "type": policy_type,
             "snapshot": snapshot
         }
+
+    def _policy_signature(self, family_policy):
+        # 같은 가족 내에서 정책 본문 중복 생성을 방지하기 위한 식별자
+        return (
+            family_policy["type"].value,
+            family_policy["name"],
+            json.dumps(family_policy["snapshot"], ensure_ascii=False, sort_keys=True)
+        )
     
     def generate_policy_sub(self):
         log_step("POLICY_SUB 생성")
@@ -568,9 +576,14 @@ class BulkDataGenerator:
                 continue
 
             owner_sub_id = owner["sub_id"]
-            policy_count = random.randint(1, 3)
+            policy_count = random.randint(0, 3)
+            family_policy_signatures = set()
+            generated_count = 0
+            max_attempts = max(1, policy_count * 5)
 
-            for _ in range(policy_count):
+            attempts = 0
+            while generated_count < policy_count and attempts < max_attempts:
+                attempts += 1
                 policy_created = rand_datetime_between(
                     self.subscription_created_map[owner_sub_id],
                     now()
@@ -597,6 +610,11 @@ class BulkDataGenerator:
                     else:
                         family_policy = self._build_customized_policy(base)
 
+                signature = self._policy_signature(family_policy)
+                if signature in family_policy_signatures:
+                    continue
+                family_policy_signatures.add(signature)
+
                 family_policy_id = self.block_policy_seq
                 self.csv.writer("block_policy").writerow([
                     family_policy_id,
@@ -612,6 +630,7 @@ class BulkDataGenerator:
                 ])
                 self.block_policy_seq += 1
                 created_policy += 1
+                generated_count += 1
 
                 for member in members:
                     sub_id = member["sub_id"]

@@ -46,11 +46,12 @@
 
 ## 정책 매핑 규칙
 
-- 가족 대표(OWNER)가 가족 정책을 생성하며, 가족당 정책은 1~3건 생성
+- 가족 대표(OWNER)가 가족 정책을 생성하며, 가족당 정책은 0~3건 생성
 - 정책 생성 방식:
   - 관리자 템플릿 그대로 사용 (`COPY`, 새 `block_policy_id` 부여)
   - 관리자 템플릿 커스텀 사용 (`CUSTOMIZE`, 새 `block_policy_id` 부여)
   - 완전 신규 정책 생성 (`NEW`)
+- 동일 가족 내 정책 중복(`policy_type + name + snapshot`)은 생성하지 않음
 - 현재 더미 정책 타입은 운영 편의상 `SCHEDULED`만 생성 (`ONCE` 미생성)
 - `policy_sub`는 해당 가족 정책(`block_policy_id`) 기준으로 가족 구성원별 적용 여부(`is_active`)를 기록
 
