@@ -495,76 +495,158 @@ class BulkDataGenerator:
     # ======================================================
     #  5️⃣ POLICY_SUB 생성
     # ======================================================
+
+    def _random_time_window(self):
+        duration_minutes = random.randint(1, 8) * 60
+        start_minutes = random.randint(0, (24 * 60) - duration_minutes)
+        end_minutes = start_minutes + duration_minutes
+        start_time = f"{start_minutes // 60:02d}:{start_minutes % 60:02d}"
+        end_time = f"{end_minutes // 60:02d}:{end_minutes % 60:02d}"
+        return start_time, end_time
+
+    def _build_new_policy(self):
+        all_days = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
+        day_count = random.randint(3, 7)
+        start_time, end_time = self._random_time_window()
+        snapshot = {
+            "days": random.sample(all_days, k=day_count),
+            "startTime": start_time,
+            "endTime": end_time
+        }
+        return {
+            "name": random.choice(["학습 집중 시간", "야간 사용 제한", "주중 규칙 모드"]),
+            "description": "가족 대표가 직접 생성한 가족 전용 시간 정책입니다.",
+            "type": PolicyType.SCHEDULED,
+            "snapshot": snapshot
+        }
+
+    def _build_customized_policy(self, base):
+        snapshot = json.loads(json.dumps(base["snapshot"]))
+        policy_type = base["type"]
+
+        if policy_type == PolicyType.SCHEDULED:
+            all_days = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
+            day_count = random.randint(3, 7)
+            start_time, end_time = self._random_time_window()
+            snapshot["days"] = random.sample(all_days, k=day_count)
+            snapshot["startTime"] = start_time
+            snapshot["endTime"] = end_time
+        else:
+            start_time, end_time = self._random_time_window()
+            snapshot["days"] = snapshot.get("days", ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"])
+            snapshot["startTime"] = start_time
+            snapshot["endTime"] = end_time
+
+        return {
+            "name": f"{base['name']} (커스텀)",
+            "description": "관리자 템플릿을 기반으로 가족 대표가 커스텀한 정책입니다.",
+            "type": policy_type,
+            "snapshot": snapshot
+        }
     
     def generate_policy_sub(self):
         log_step("POLICY_SUB 생성")
 
-        scheduled_ids = [
+        template_ids = [
             pid for pid, p in self.block_policy_map.items()
-            if p["type"] == PolicyType.SCHEDULED and p.get("is_active", True)
+            if p.get("is_active", True) and p["type"] == PolicyType.SCHEDULED
         ]
-        if not scheduled_ids:
-            log_warn("활성화된 SCHEDULED 정책이 없어 POLICY_SUB 생성 스킵")
+        if not template_ids:
+            log_warn("활성화된 SCHEDULED 관리자 정책 템플릿이 없어 POLICY_SUB 생성 스킵")
             return
 
-        created = 0
-
+        family_group_map: Dict[int, List[Dict[str, Any]]] = {}
         for item in self.family_subscriptions:
-            sub_id = item["sub_id"]
-            family_id = item["family_id"]
-            role = item["role"]
+            family_group_map.setdefault(item["family_id"], []).append(item)
 
-            if role == FamilyRole.CHILD:
-                policy_type = random.choices([None, PolicyType.SCHEDULED], weights=[70, 30])[0]
-            else:
-                policy_type = random.choices([None, PolicyType.SCHEDULED], weights=[85, 15])[0]
+        created_policy = 0
+        created_mapping = 0
 
-            if policy_type is None:
+        for family_id, members in family_group_map.items():
+            owner = next((m for m in members if m["role"] == FamilyRole.OWNER), None)
+            if owner is None:
                 continue
 
-            template_policy_id = random.choice(scheduled_ids)
-            base = self.block_policy_map[template_policy_id]
+            owner_sub_id = owner["sub_id"]
+            policy_count = random.randint(1, 3)
 
-            sub_created = self.subscription_created_map[sub_id]
-            policy_created = rand_datetime_between(sub_created, now())
-
-            # 템플릿을 그대로 쓰더라도 가족별 신규 정책 ID를 발급해 매핑한다.
-            family_policy_id = self.block_policy_seq
-            is_policy_active = random.random() < 0.85
-            self.csv.writer("block_policy").writerow([
-                family_policy_id,
-                base["name"],
-                base.get("description", ""),
-                family_id,
-                base["type"].value,
-                json.dumps(base["snapshot"], ensure_ascii=False),
-                True,
-                False,
-                policy_created,
-                policy_created
-            ])
-            self.block_policy_seq += 1
-
-            self.csv.writer("policy_sub").writerow([
-                self.policy_sub_seq,
-                sub_id,
-                family_policy_id,
-                is_policy_active,
-                policy_created,
-                policy_created
-            ])
-            if is_policy_active:
-                self.create_notification(
-                    sub_id=sub_id,
-                    noti_type=NotificationType.TIME_WINDOW_POLICY_APPLIED,
-                    message=f"“{base['name']}” 시간 차단 정책이 적용되었습니다",
-                    created_time=policy_created
+            for _ in range(policy_count):
+                policy_created = rand_datetime_between(
+                    self.subscription_created_map[owner_sub_id],
+                    now()
                 )
 
-            self.policy_sub_seq += 1
-            created += 1
+                policy_mode = random.choices(
+                    ["COPY", "CUSTOMIZE", "NEW"],
+                    weights=[45, 35, 20],
+                    k=1
+                )[0]
 
-        log_done(f"POLICY_SUB 생성 완료 ({created:,}건)")
+                if policy_mode == "NEW":
+                    family_policy = self._build_new_policy()
+                else:
+                    template_policy_id = random.choice(template_ids)
+                    base = self.block_policy_map[template_policy_id]
+                    if policy_mode == "COPY":
+                        family_policy = {
+                            "name": f"{base['name']} (템플릿)",
+                            "description": base.get("description", ""),
+                            "type": base["type"],
+                            "snapshot": json.loads(json.dumps(base["snapshot"]))
+                        }
+                    else:
+                        family_policy = self._build_customized_policy(base)
+
+                family_policy_id = self.block_policy_seq
+                self.csv.writer("block_policy").writerow([
+                    family_policy_id,
+                    family_policy["name"],
+                    family_policy["description"],
+                    family_id,
+                    family_policy["type"].value,
+                    json.dumps(family_policy["snapshot"], ensure_ascii=False),
+                    True,
+                    False,
+                    policy_created,
+                    policy_created
+                ])
+                self.block_policy_seq += 1
+                created_policy += 1
+
+                for member in members:
+                    sub_id = member["sub_id"]
+                    role = member["role"]
+
+                    if role == FamilyRole.CHILD:
+                        is_policy_active = random.random() < 0.8
+                    elif role == FamilyRole.PARENT:
+                        is_policy_active = random.random() < 0.55
+                    else:
+                        is_policy_active = random.random() < 0.35
+
+                    self.csv.writer("policy_sub").writerow([
+                        self.policy_sub_seq,
+                        sub_id,
+                        family_policy_id,
+                        is_policy_active,
+                        policy_created,
+                        policy_created
+                    ])
+
+                    if is_policy_active:
+                        self.create_notification(
+                            sub_id=sub_id,
+                            noti_type=NotificationType.TIME_WINDOW_POLICY_APPLIED,
+                            message=f"“{family_policy['name']}” 시간 차단 정책이 적용되었습니다",
+                            created_time=policy_created
+                        )
+
+                    self.policy_sub_seq += 1
+                    created_mapping += 1
+
+        log_done(
+            f"POLICY_SUB 생성 완료 (가족 정책 {created_policy:,}건 / 구성원 매핑 {created_mapping:,}건)"
+        )
     
 
     # ======================================================

@@ -142,10 +142,10 @@ python scripts/team_seed.py
 | family_sub          | ~860,000   |
 | family_apply        | 13~20      |
 | family_apply_target | 가변 (타입별 대상자 수 합계) |
-| block_policy        | 마스터 + 정책 적용 건수만큼 증가 |
+| block_policy        | 마스터 + 가족 정책 생성 건수만큼 증가 |
 | notification_allow  | 4,000,000  |
 | blocked_service_sub | ~650,000   |
-| policy_sub          | ~200,000   |
+| policy_sub          | 가변 (가족 정책 수 × 가족 구성원 수) |
 | notification        | ~1,000,000 |
 
 ---

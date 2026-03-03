@@ -46,8 +46,13 @@
 
 ## 정책 매핑 규칙
 
-- 더미 생성 시 템플릿(관리자) 정책을 그대로 써도 `block_policy`에 가족별 정책 row를 새로 생성
-- `policy_sub`는 템플릿 ID가 아니라 새로 생성된 `block_policy_id`를 매핑
+- 가족 대표(OWNER)가 가족 정책을 생성하며, 가족당 정책은 1~3건 생성
+- 정책 생성 방식:
+  - 관리자 템플릿 그대로 사용 (`COPY`, 새 `block_policy_id` 부여)
+  - 관리자 템플릿 커스텀 사용 (`CUSTOMIZE`, 새 `block_policy_id` 부여)
+  - 완전 신규 정책 생성 (`NEW`)
+- 현재 더미 정책 타입은 운영 편의상 `SCHEDULED`만 생성 (`ONCE` 미생성)
+- `policy_sub`는 해당 가족 정책(`block_policy_id`) 기준으로 가족 구성원별 적용 여부(`is_active`)를 기록
 
 ## 데이터 선물
 
