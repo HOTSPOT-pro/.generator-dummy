@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import psycopg2
 
 # 프로젝트 루트를 path에 추가
@@ -24,7 +25,10 @@ CSV_TABLE_MAPPING = [
     ("subscription.csv", "subscription"),
     ("family.csv", "family"),
     ("family_sub.csv", "family_sub"),
+    ("family_apply.csv", "family_apply"),
+    ("family_apply_target.csv", "family_apply_target"),
     ("notification_allow.csv", "notification_allow"),
+    ("block_policy.csv", "block_policy"),
     ("policy_sub.csv", "policy_sub"),
     ("blocked_service_sub.csv", "blocked_service_sub"),
     ("present_data.csv", "present_data"),
@@ -45,6 +49,9 @@ TABLE_PK_MAP = {
     "blocked_service_sub": "blocked_service_sub_id",
     "present_data": "present_data_id",
     "notification": "notification_id",
+    "family_apply": "family_apply_id",
+    "family_apply_target": "family_apply_target_id",
+    "family_remove_schedule": "family_remove_schedule_id",
 }
 
 
@@ -106,11 +113,25 @@ def load_all_csv(conn):
     print(f"CSV 파일 경로: {OUTPUT_DIR}\n")
 
     for csv_file, table_name in CSV_TABLE_MAPPING:
-        print(f"  - {csv_file} -> {table_name}", end=" ")
-        count = load_csv(conn, csv_file, table_name)
-        print(f"({count:,} rows)")
+        max_retries = 3
+        for attempt in range(1, max_retries + 1):
+            try:
+                print(f"  - {csv_file} -> {table_name}", end=" ")
+                count = load_csv(conn, csv_file, table_name)
+                conn.commit()  # 테이블 단위 커밋으로 락 유지 시간 최소화
+                print(f"({count:,} rows)")
+                break
+            except psycopg2.errors.DeadlockDetected:
+                conn.rollback()
+                if attempt == max_retries:
+                    raise
+                wait_sec = attempt
+                print(f"[RETRY {attempt}/{max_retries}] deadlock 감지, {wait_sec}s 후 재시도")
+                time.sleep(wait_sec)
+            except Exception:
+                conn.rollback()
+                raise
 
-    conn.commit()
     print("\nCSV 데이터 로드 완료!\n")
 
 
@@ -169,7 +190,10 @@ def verify_data(conn):
         "policy_sub",
         "blocked_service_sub",
         "present_data",
-        "notification"
+        "notification",
+        "family_apply",
+        "family_apply_target",
+        "family_remove_schedule",
     ]
 
     with conn.cursor() as cur:

@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS family_apply_target CASCADE;
+DROP TABLE IF EXISTS family_remove_schedule CASCADE;
 DROP TABLE IF EXISTS policy_sub CASCADE;
 DROP TABLE IF EXISTS blocked_service_sub CASCADE;
 DROP TABLE IF EXISTS present_data CASCADE;
@@ -14,3 +16,4 @@ DROP TABLE IF EXISTS block_policy CASCADE;
 DROP TABLE IF EXISTS app_blocked_service CASCADE;
 DROP TABLE IF EXISTS plan CASCADE;
 DROP TABLE IF EXISTS outbox_event CASCADE;
+DROP TABLE IF EXISTS notification_outbox_event CASCADE;
