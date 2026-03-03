@@ -551,6 +551,35 @@ class BulkDataGenerator:
             family_policy["name"],
             json.dumps(family_policy["snapshot"], ensure_ascii=False, sort_keys=True)
         )
+
+    def _time_to_minutes(self, hhmm):
+        hour, minute = hhmm.split(":")
+        return int(hour) * 60 + int(minute)
+
+    def _extract_scheduled_intervals(self, snapshot):
+        days = snapshot.get("days", [])
+        start_time = snapshot.get("startTime")
+        end_time = snapshot.get("endTime")
+        if not days or not start_time or not end_time:
+            return []
+
+        start_min = self._time_to_minutes(start_time)
+        end_min = self._time_to_minutes(end_time)
+        if end_min <= start_min:
+            return []
+
+        return [(day, start_min, end_min) for day in days]
+
+    def _has_schedule_conflict(self, active_windows_by_day, intervals):
+        for day, start_min, end_min in intervals:
+            for existing_start, existing_end in active_windows_by_day.get(day, []):
+                if max(start_min, existing_start) < min(end_min, existing_end):
+                    return True
+        return False
+
+    def _append_active_windows(self, active_windows_by_day, intervals):
+        for day, start_min, end_min in intervals:
+            active_windows_by_day.setdefault(day, []).append((start_min, end_min))
     
     def generate_policy_sub(self):
         log_step("POLICY_SUB 생성")
@@ -576,6 +605,7 @@ class BulkDataGenerator:
                 continue
 
             owner_sub_id = owner["sub_id"]
+            member_active_windows = {m["sub_id"]: {} for m in members}
             policy_count = random.randint(0, 3)
             family_policy_signatures = set()
             generated_count = 0
@@ -631,6 +661,7 @@ class BulkDataGenerator:
                 self.block_policy_seq += 1
                 created_policy += 1
                 generated_count += 1
+                policy_intervals = self._extract_scheduled_intervals(family_policy["snapshot"])
 
                 for member in members:
                     sub_id = member["sub_id"]
@@ -642,6 +673,12 @@ class BulkDataGenerator:
                         is_policy_active = random.random() < 0.55
                     else:
                         is_policy_active = random.random() < 0.35
+
+                    if is_policy_active and policy_intervals:
+                        if self._has_schedule_conflict(member_active_windows[sub_id], policy_intervals):
+                            is_policy_active = False
+                        else:
+                            self._append_active_windows(member_active_windows[sub_id], policy_intervals)
 
                     self.csv.writer("policy_sub").writerow([
                         self.policy_sub_seq,

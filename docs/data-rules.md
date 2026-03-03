@@ -52,6 +52,7 @@
   - 관리자 템플릿 커스텀 사용 (`CUSTOMIZE`, 새 `block_policy_id` 부여)
   - 완전 신규 정책 생성 (`NEW`)
 - 동일 가족 내 정책 중복(`policy_type + name + snapshot`)은 생성하지 않음
+- 구성원별 활성 정책(`policy_sub.is_active=true`)의 시간대는 서로 겹치지 않게 생성
 - 현재 더미 정책 타입은 운영 편의상 `SCHEDULED`만 생성 (`ONCE` 미생성)
 - `policy_sub`는 해당 가족 정책(`block_policy_id`) 기준으로 가족 구성원별 적용 여부(`is_active`)를 기록
 
