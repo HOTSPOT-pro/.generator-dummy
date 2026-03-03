@@ -334,7 +334,163 @@ class BulkDataGenerator:
                 self.family_apply_target_seq += 1
                 created_target += 1
 
-        log_done(f"FAMILY_APPLY 생성 완료 (신청 {created_apply:,}건 / 대상 {created_target:,}건)")
+        log_done(f"FAMILY_APPLY(CREATE) 생성 완료 (신청 {created_apply:,}건 / 대상 {created_target:,}건)")
+
+    def generate_family_apply_add(self):
+        log_step("FAMILY_APPLY(ADD) 생성")
+
+        family_group_map: Dict[int, List[Dict[str, Any]]] = {}
+        for item in self.family_subscriptions:
+            family_group_map.setdefault(item["family_id"], []).append(item)
+
+        eligible_families: List[Dict[str, Any]] = []
+        for family_id, members in family_group_map.items():
+            owner = next((m for m in members if m["role"] == FamilyRole.OWNER), None)
+            if owner is None:
+                continue
+            if len(members) >= 8:
+                continue
+            eligible_families.append({
+                "family_id": family_id,
+                "owner_sub_id": owner["sub_id"],
+                "size": len(members)
+            })
+
+        candidates = self.non_family_subscriptions[:]
+        if not eligible_families or not candidates:
+            log_warn("ADD 대상 가족/비가족 사용자 부족으로 FAMILY_APPLY(ADD) 생성 스킵")
+            return
+
+        random.shuffle(eligible_families)
+        random.shuffle(candidates)
+
+        target_apply = min(random.randint(4, 5), len(eligible_families))
+        created_apply = 0
+        created_target = 0
+        idx = 0
+
+        for family in eligible_families:
+            if created_apply >= target_apply or idx >= len(candidates):
+                break
+
+            family_id = family["family_id"]
+            requester_sub_id = family["owner_sub_id"]
+            max_addable = min(8 - family["size"], len(candidates) - idx)
+            if max_addable < 1:
+                continue
+
+            apply_created = rand_datetime_between(
+                self.subscription_created_map[requester_sub_id],
+                now()
+            )
+
+            family_apply_id = self.family_apply_seq
+            self.csv.writer("family_apply").writerow([
+                family_apply_id,
+                requester_sub_id,
+                family_id,
+                "ADD",
+                "\\N",
+                "PENDING",
+                apply_created,
+                apply_created
+            ])
+            self.family_apply_seq += 1
+            created_apply += 1
+
+            target_count = random.randint(1, max_addable)
+            for _ in range(target_count):
+                target_sub_id = candidates[idx]
+                idx += 1
+
+                target_role = random.choice(["PARENT", "CHILD"])
+                self.csv.writer("family_apply_target").writerow([
+                    self.family_apply_target_seq,
+                    family_apply_id,
+                    target_sub_id,
+                    target_role
+                ])
+                self.family_apply_target_seq += 1
+                created_target += 1
+
+        log_done(f"FAMILY_APPLY(ADD) 생성 완료 (신청 {created_apply:,}건 / 대상 {created_target:,}건)")
+
+    def generate_family_apply_remove(self):
+        log_step("FAMILY_APPLY(REMOVE) 생성")
+
+        family_group_map: Dict[int, List[Dict[str, Any]]] = {}
+        for item in self.family_subscriptions:
+            family_group_map.setdefault(item["family_id"], []).append(item)
+
+        eligible_families: List[Dict[str, Any]] = []
+        for family_id, members in family_group_map.items():
+            owner = next((m for m in members if m["role"] == FamilyRole.OWNER), None)
+            if owner is None:
+                continue
+            removable_members = [m for m in members if m["role"] != FamilyRole.OWNER]
+            max_removable = min(len(removable_members), len(members) - 2)
+            if max_removable < 1:
+                continue
+            eligible_families.append({
+                "family_id": family_id,
+                "owner_sub_id": owner["sub_id"],
+                "removable_members": removable_members,
+                "max_removable": max_removable
+            })
+
+        if not eligible_families:
+            log_warn("REMOVE 대상 가족 부족으로 FAMILY_APPLY(REMOVE) 생성 스킵")
+            return
+
+        random.shuffle(eligible_families)
+        target_apply = min(random.randint(4, 5), len(eligible_families))
+        created_apply = 0
+        created_target = 0
+
+        for family in eligible_families:
+            if created_apply >= target_apply:
+                break
+
+            family_id = family["family_id"]
+            requester_sub_id = family["owner_sub_id"]
+            max_removable = family["max_removable"]
+            removable_members = family["removable_members"]
+
+            apply_created = rand_datetime_between(
+                self.subscription_created_map[requester_sub_id],
+                now()
+            )
+
+            family_apply_id = self.family_apply_seq
+            self.csv.writer("family_apply").writerow([
+                family_apply_id,
+                requester_sub_id,
+                family_id,
+                "REMOVE",
+                "\\N",
+                "PENDING",
+                apply_created,
+                apply_created
+            ])
+            self.family_apply_seq += 1
+            created_apply += 1
+
+            target_count = random.randint(1, max_removable)
+            selected_targets = random.sample(removable_members, k=target_count)
+
+            for member in selected_targets:
+                target_sub_id = member["sub_id"]
+                target_role = member["role"].value
+                self.csv.writer("family_apply_target").writerow([
+                    self.family_apply_target_seq,
+                    family_apply_id,
+                    target_sub_id,
+                    target_role
+                ])
+                self.family_apply_target_seq += 1
+                created_target += 1
+
+        log_done(f"FAMILY_APPLY(REMOVE) 생성 완료 (신청 {created_apply:,}건 / 대상 {created_target:,}건)")
     
     # ======================================================
     #  5️⃣ POLICY_SUB 생성
@@ -610,6 +766,8 @@ class BulkDataGenerator:
         total_family_members = self.generate_family()
         self.generate_remaining_users(total_family_members)
         self.generate_family_apply_create()
+        self.generate_family_apply_add()
+        self.generate_family_apply_remove()
 
         self.generate_policy_sub()
         self.generate_blocked_service_sub()

@@ -68,7 +68,10 @@
 - 가족 신청(`family_apply`)은 ADD/REMOVE/CREATE 요청을 관리
 - 신청 대상자(`family_apply_target`)는 다건 대상자 매핑 지원
 - 가족 구성원 삭제는 즉시 반영하지 않고 스케줄(`family_remove_schedule`) 기반 반영
-- 더미 생성 시 `CREATE` 신청은 비가족 사용자 기준 5~10건, 상태는 모두 `PENDING`
+- 더미 생성 시 신청 상태는 모두 `PENDING`
+- `CREATE`: 비가족 신청자 + 요청자 제외 대상자 2~8명 (5~10건)
+- `ADD`: 기존 가족 대표 신청 + 비가족 대상자 1명 이상 (4~5건, 가족 최대 8명 제한)
+- `REMOVE`: 기존 가족 대표 신청 + 가족 구성원 대상자 1명 이상 (4~5건, 삭제 후 최소 2명 보장)
 
 ✔ 데이터 선물 이벤트
 - 부모 → 자녀 데이터 선물
@@ -137,8 +140,8 @@ python scripts/team_seed.py
 | subscription        | 1,000,000  |
 | family              | 250,000    |
 | family_sub          | ~860,000   |
-| family_apply        | 5~10       |
-| family_apply_target | ~10~30     |
+| family_apply        | 13~20      |
+| family_apply_target | 가변 (타입별 대상자 수 합계) |
 | block_policy        | 마스터 + 정책 적용 건수만큼 증가 |
 | notification_allow  | 4,000,000  |
 | blocked_service_sub | ~650,000   |
