@@ -286,8 +286,8 @@ class BulkDataGenerator:
         created_target = 0
 
         idx = 0
-        # 가족 생성 신청은 최소 2명(요청자 포함)이어야 한다.
-        while created_apply < max_apply and idx < (len(candidates) - 1):
+        # 가족 생성 신청은 요청자 외 대상자가 최소 2명이어야 한다.
+        while created_apply < max_apply and idx < (len(candidates) - 2):
             requester_sub_id = candidates[idx]
             idx += 1
 
@@ -312,19 +312,19 @@ class BulkDataGenerator:
             self.family_apply_seq += 1
             created_apply += 1
 
-            # 요청자 포함 2~3명 타겟
+            # 요청자 제외 2~8명 타겟
             target_count = min(
-                random.choices([2, 3], weights=[80, 20], k=1)[0],
-                len(candidates) - idx + 1
+                random.randint(2, 8),
+                len(candidates) - idx
             )
-            target_pool = [requester_sub_id]
+            target_pool = []
 
             while len(target_pool) < target_count and idx < len(candidates):
                 target_pool.append(candidates[idx])
                 idx += 1
 
-            for t_idx, target_sub_id in enumerate(target_pool):
-                target_role = "OWNER" if t_idx == 0 else random.choice(["PARENT", "CHILD"])
+            for target_sub_id in target_pool:
+                target_role = random.choice(["PARENT", "CHILD"])
                 self.csv.writer("family_apply_target").writerow([
                     self.family_apply_target_seq,
                     family_apply_id,
