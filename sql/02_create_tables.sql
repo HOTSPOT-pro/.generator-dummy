@@ -31,8 +31,13 @@ CREATE TABLE social_account (
     created_time TIMESTAMP NOT NULL DEFAULT now(),
     modified_time TIMESTAMP NOT NULL DEFAULT now(),
     PRIMARY KEY ("social_account_id"),
-    CONSTRAINT uk_social_account_provider_social_id UNIQUE (provider, social_id)
 );
+
+-- 2. 부분 유니크 인덱스 별도 생성 (is_deleted가 false인 경우만 유니크 보장)
+CREATE UNIQUE INDEX uk_social_account_provider_social_id
+ON social_account (provider, social_id)
+WHERE is_deleted = false;
+
 
 CREATE TABLE subscription (
     sub_id BIGSERIAL NOT NULL,
