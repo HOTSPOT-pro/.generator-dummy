@@ -743,7 +743,7 @@ class BulkDataGenerator:
                     self.blocked_service_sub_seq,
                     sub_id,
                     blocked_service_id,
-                    False,
+                    True,
                     blocked_created,
                     blocked_created
                 ])
