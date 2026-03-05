@@ -184,12 +184,3 @@ CREATE TABLE present_data (
     created_time TIMESTAMP NOT NULL DEFAULT now(),
     PRIMARY KEY ("present_data_id")
 );
-
-CREATE TABLE notification_outbox_event (
-    id UUID NOT NULL,
-    aggregatetype VARCHAR(100) NOT NULL,
-    aggregateid   VARCHAR(100) NOT NULL,
-    type          VARCHAR(100) NOT NULL,
-    payload       TEXT NOT NULL,
-    PRIMARY KEY (id)
-);
