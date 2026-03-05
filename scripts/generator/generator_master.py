@@ -286,8 +286,8 @@ class BulkDataGenerator:
         created_target = 0
 
         idx = 0
-        # 가족 생성 신청은 최소 2명(요청자 포함)이어야 한다.
-        while created_apply < max_apply and idx < (len(candidates) - 1):
+        # 가족 생성 신청은 요청자 외 대상자가 최소 2명이어야 한다.
+        while created_apply < max_apply and idx < (len(candidates) - 2):
             requester_sub_id = candidates[idx]
             idx += 1
 
@@ -312,19 +312,19 @@ class BulkDataGenerator:
             self.family_apply_seq += 1
             created_apply += 1
 
-            # 요청자 포함 2~3명 타겟
+            # 요청자 제외 2~8명 타겟
             target_count = min(
-                random.choices([2, 3], weights=[80, 20], k=1)[0],
-                len(candidates) - idx + 1
+                random.randint(2, 8),
+                len(candidates) - idx
             )
-            target_pool = [requester_sub_id]
+            target_pool = []
 
             while len(target_pool) < target_count and idx < len(candidates):
                 target_pool.append(candidates[idx])
                 idx += 1
 
-            for t_idx, target_sub_id in enumerate(target_pool):
-                target_role = "OWNER" if t_idx == 0 else random.choice(["PARENT", "CHILD"])
+            for target_sub_id in target_pool:
+                target_role = random.choice(["PARENT", "CHILD"])
                 self.csv.writer("family_apply_target").writerow([
                     self.family_apply_target_seq,
                     family_apply_id,
@@ -334,81 +334,375 @@ class BulkDataGenerator:
                 self.family_apply_target_seq += 1
                 created_target += 1
 
-        log_done(f"FAMILY_APPLY 생성 완료 (신청 {created_apply:,}건 / 대상 {created_target:,}건)")
+        log_done(f"FAMILY_APPLY(CREATE) 생성 완료 (신청 {created_apply:,}건 / 대상 {created_target:,}건)")
+
+    def generate_family_apply_add(self):
+        log_step("FAMILY_APPLY(ADD) 생성")
+
+        family_group_map: Dict[int, List[Dict[str, Any]]] = {}
+        for item in self.family_subscriptions:
+            family_group_map.setdefault(item["family_id"], []).append(item)
+
+        eligible_families: List[Dict[str, Any]] = []
+        for family_id, members in family_group_map.items():
+            owner = next((m for m in members if m["role"] == FamilyRole.OWNER), None)
+            if owner is None:
+                continue
+            if len(members) >= 8:
+                continue
+            eligible_families.append({
+                "family_id": family_id,
+                "owner_sub_id": owner["sub_id"],
+                "size": len(members)
+            })
+
+        candidates = self.non_family_subscriptions[:]
+        if not eligible_families or not candidates:
+            log_warn("ADD 대상 가족/비가족 사용자 부족으로 FAMILY_APPLY(ADD) 생성 스킵")
+            return
+
+        random.shuffle(eligible_families)
+        random.shuffle(candidates)
+
+        target_apply = min(random.randint(4, 5), len(eligible_families))
+        created_apply = 0
+        created_target = 0
+        idx = 0
+
+        for family in eligible_families:
+            if created_apply >= target_apply or idx >= len(candidates):
+                break
+
+            family_id = family["family_id"]
+            requester_sub_id = family["owner_sub_id"]
+            max_addable = min(8 - family["size"], len(candidates) - idx)
+            if max_addable < 1:
+                continue
+
+            apply_created = rand_datetime_between(
+                self.subscription_created_map[requester_sub_id],
+                now()
+            )
+
+            family_apply_id = self.family_apply_seq
+            self.csv.writer("family_apply").writerow([
+                family_apply_id,
+                requester_sub_id,
+                family_id,
+                "ADD",
+                "\\N",
+                "PENDING",
+                apply_created,
+                apply_created
+            ])
+            self.family_apply_seq += 1
+            created_apply += 1
+
+            target_count = random.randint(1, max_addable)
+            for _ in range(target_count):
+                target_sub_id = candidates[idx]
+                idx += 1
+
+                target_role = random.choice(["PARENT", "CHILD"])
+                self.csv.writer("family_apply_target").writerow([
+                    self.family_apply_target_seq,
+                    family_apply_id,
+                    target_sub_id,
+                    target_role
+                ])
+                self.family_apply_target_seq += 1
+                created_target += 1
+
+        log_done(f"FAMILY_APPLY(ADD) 생성 완료 (신청 {created_apply:,}건 / 대상 {created_target:,}건)")
+
+    def generate_family_apply_remove(self):
+        log_step("FAMILY_APPLY(REMOVE) 생성")
+
+        family_group_map: Dict[int, List[Dict[str, Any]]] = {}
+        for item in self.family_subscriptions:
+            family_group_map.setdefault(item["family_id"], []).append(item)
+
+        eligible_families: List[Dict[str, Any]] = []
+        for family_id, members in family_group_map.items():
+            owner = next((m for m in members if m["role"] == FamilyRole.OWNER), None)
+            if owner is None:
+                continue
+            removable_members = [m for m in members if m["role"] != FamilyRole.OWNER]
+            max_removable = min(len(removable_members), len(members) - 2)
+            if max_removable < 1:
+                continue
+            eligible_families.append({
+                "family_id": family_id,
+                "owner_sub_id": owner["sub_id"],
+                "removable_members": removable_members,
+                "max_removable": max_removable
+            })
+
+        if not eligible_families:
+            log_warn("REMOVE 대상 가족 부족으로 FAMILY_APPLY(REMOVE) 생성 스킵")
+            return
+
+        random.shuffle(eligible_families)
+        target_apply = min(random.randint(4, 5), len(eligible_families))
+        created_apply = 0
+        created_target = 0
+
+        for family in eligible_families:
+            if created_apply >= target_apply:
+                break
+
+            family_id = family["family_id"]
+            requester_sub_id = family["owner_sub_id"]
+            max_removable = family["max_removable"]
+            removable_members = family["removable_members"]
+
+            apply_created = rand_datetime_between(
+                self.subscription_created_map[requester_sub_id],
+                now()
+            )
+
+            family_apply_id = self.family_apply_seq
+            self.csv.writer("family_apply").writerow([
+                family_apply_id,
+                requester_sub_id,
+                family_id,
+                "REMOVE",
+                "\\N",
+                "PENDING",
+                apply_created,
+                apply_created
+            ])
+            self.family_apply_seq += 1
+            created_apply += 1
+
+            target_count = random.randint(1, max_removable)
+            selected_targets = random.sample(removable_members, k=target_count)
+
+            for member in selected_targets:
+                target_sub_id = member["sub_id"]
+                target_role = member["role"].value
+                self.csv.writer("family_apply_target").writerow([
+                    self.family_apply_target_seq,
+                    family_apply_id,
+                    target_sub_id,
+                    target_role
+                ])
+                self.family_apply_target_seq += 1
+                created_target += 1
+
+        log_done(f"FAMILY_APPLY(REMOVE) 생성 완료 (신청 {created_apply:,}건 / 대상 {created_target:,}건)")
     
     # ======================================================
     #  5️⃣ POLICY_SUB 생성
     # ======================================================
+
+    def _random_time_window(self):
+        duration_minutes = random.randint(1, 8) * 60
+        start_minutes = random.randint(0, (24 * 60) - duration_minutes)
+        end_minutes = start_minutes + duration_minutes
+        start_time = f"{start_minutes // 60:02d}:{start_minutes % 60:02d}"
+        end_time = f"{end_minutes // 60:02d}:{end_minutes % 60:02d}"
+        return start_time, end_time
+
+    def _build_new_policy(self):
+        all_days = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
+        day_count = random.randint(3, 7)
+        start_time, end_time = self._random_time_window()
+        snapshot = {
+            "days": random.sample(all_days, k=day_count),
+            "startTime": start_time,
+            "endTime": end_time
+        }
+        return {
+            "name": random.choice(["학습 집중 시간", "야간 사용 제한", "주중 규칙 모드"]),
+            "description": "가족 대표가 직접 생성한 가족 전용 시간 정책입니다.",
+            "type": PolicyType.SCHEDULED,
+            "snapshot": snapshot
+        }
+
+    def _build_customized_policy(self, base):
+        snapshot = json.loads(json.dumps(base["snapshot"]))
+        policy_type = base["type"]
+
+        if policy_type == PolicyType.SCHEDULED:
+            all_days = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
+            day_count = random.randint(3, 7)
+            start_time, end_time = self._random_time_window()
+            snapshot["days"] = random.sample(all_days, k=day_count)
+            snapshot["startTime"] = start_time
+            snapshot["endTime"] = end_time
+        else:
+            start_time, end_time = self._random_time_window()
+            snapshot["days"] = snapshot.get("days", ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"])
+            snapshot["startTime"] = start_time
+            snapshot["endTime"] = end_time
+
+        return {
+            "name": f"{base['name']} (커스텀)",
+            "description": "관리자 템플릿을 기반으로 가족 대표가 커스텀한 정책입니다.",
+            "type": policy_type,
+            "snapshot": snapshot
+        }
+
+    def _policy_signature(self, family_policy):
+        # 같은 가족 내에서 정책 본문 중복 생성을 방지하기 위한 식별자
+        return (
+            family_policy["type"].value,
+            family_policy["name"],
+            json.dumps(family_policy["snapshot"], ensure_ascii=False, sort_keys=True)
+        )
+
+    def _time_to_minutes(self, hhmm):
+        hour, minute = hhmm.split(":")
+        return int(hour) * 60 + int(minute)
+
+    def _extract_scheduled_intervals(self, snapshot):
+        days = snapshot.get("days", [])
+        start_time = snapshot.get("startTime")
+        end_time = snapshot.get("endTime")
+        if not days or not start_time or not end_time:
+            return []
+
+        start_min = self._time_to_minutes(start_time)
+        end_min = self._time_to_minutes(end_time)
+        if end_min <= start_min:
+            return []
+
+        return [(day, start_min, end_min) for day in days]
+
+    def _has_schedule_conflict(self, active_windows_by_day, intervals):
+        for day, start_min, end_min in intervals:
+            for existing_start, existing_end in active_windows_by_day.get(day, []):
+                if max(start_min, existing_start) < min(end_min, existing_end):
+                    return True
+        return False
+
+    def _append_active_windows(self, active_windows_by_day, intervals):
+        for day, start_min, end_min in intervals:
+            active_windows_by_day.setdefault(day, []).append((start_min, end_min))
     
     def generate_policy_sub(self):
         log_step("POLICY_SUB 생성")
 
-        scheduled_ids = [
+        template_ids = [
             pid for pid, p in self.block_policy_map.items()
-            if p["type"] == PolicyType.SCHEDULED and p.get("is_active", True)
+            if p.get("is_active", True) and p["type"] == PolicyType.SCHEDULED
         ]
-        if not scheduled_ids:
-            log_warn("활성화된 SCHEDULED 정책이 없어 POLICY_SUB 생성 스킵")
+        if not template_ids:
+            log_warn("활성화된 SCHEDULED 관리자 정책 템플릿이 없어 POLICY_SUB 생성 스킵")
             return
 
-        created = 0
-
+        family_group_map: Dict[int, List[Dict[str, Any]]] = {}
         for item in self.family_subscriptions:
-            sub_id = item["sub_id"]
-            family_id = item["family_id"]
-            role = item["role"]
+            family_group_map.setdefault(item["family_id"], []).append(item)
 
-            if role == FamilyRole.CHILD:
-                policy_type = random.choices([None, PolicyType.SCHEDULED], weights=[70, 30])[0]
-            else:
-                policy_type = random.choices([None, PolicyType.SCHEDULED], weights=[85, 15])[0]
+        created_policy = 0
+        created_mapping = 0
 
-            if policy_type is None:
+        for family_id, members in family_group_map.items():
+            owner = next((m for m in members if m["role"] == FamilyRole.OWNER), None)
+            if owner is None:
                 continue
 
-            template_policy_id = random.choice(scheduled_ids)
-            base = self.block_policy_map[template_policy_id]
+            owner_sub_id = owner["sub_id"]
+            member_active_windows = {m["sub_id"]: {} for m in members}
+            policy_count = random.randint(0, 3)
+            family_policy_signatures = set()
+            generated_count = 0
+            max_attempts = max(1, policy_count * 5)
 
-            sub_created = self.subscription_created_map[sub_id]
-            policy_created = rand_datetime_between(sub_created, now())
-
-            # 템플릿을 그대로 쓰더라도 가족별 신규 정책 ID를 발급해 매핑한다.
-            family_policy_id = self.block_policy_seq
-            is_policy_active = random.random() < 0.85
-            self.csv.writer("block_policy").writerow([
-                family_policy_id,
-                base["name"],
-                base.get("description", ""),
-                family_id,
-                base["type"].value,
-                json.dumps(base["snapshot"], ensure_ascii=False),
-                True,
-                False,
-                policy_created,
-                policy_created
-            ])
-            self.block_policy_seq += 1
-
-            self.csv.writer("policy_sub").writerow([
-                self.policy_sub_seq,
-                sub_id,
-                family_policy_id,
-                is_policy_active,
-                policy_created,
-                policy_created
-            ])
-            if is_policy_active:
-                self.create_notification(
-                    sub_id=sub_id,
-                    noti_type=NotificationType.TIME_WINDOW_POLICY_APPLIED,
-                    message=f"“{base['name']}” 시간 차단 정책이 적용되었습니다",
-                    created_time=policy_created
+            attempts = 0
+            while generated_count < policy_count and attempts < max_attempts:
+                attempts += 1
+                policy_created = rand_datetime_between(
+                    self.subscription_created_map[owner_sub_id],
+                    now()
                 )
 
-            self.policy_sub_seq += 1
-            created += 1
+                policy_mode = random.choices(
+                    ["COPY", "CUSTOMIZE", "NEW"],
+                    weights=[45, 35, 20],
+                    k=1
+                )[0]
 
-        log_done(f"POLICY_SUB 생성 완료 ({created:,}건)")
+                if policy_mode == "NEW":
+                    family_policy = self._build_new_policy()
+                else:
+                    template_policy_id = random.choice(template_ids)
+                    base = self.block_policy_map[template_policy_id]
+                    if policy_mode == "COPY":
+                        family_policy = {
+                            "name": f"{base['name']} (템플릿)",
+                            "description": base.get("description", ""),
+                            "type": base["type"],
+                            "snapshot": json.loads(json.dumps(base["snapshot"]))
+                        }
+                    else:
+                        family_policy = self._build_customized_policy(base)
+
+                signature = self._policy_signature(family_policy)
+                if signature in family_policy_signatures:
+                    continue
+                family_policy_signatures.add(signature)
+
+                family_policy_id = self.block_policy_seq
+                self.csv.writer("block_policy").writerow([
+                    family_policy_id,
+                    family_policy["name"],
+                    family_policy["description"],
+                    family_id,
+                    family_policy["type"].value,
+                    json.dumps(family_policy["snapshot"], ensure_ascii=False),
+                    True,
+                    False,
+                    policy_created,
+                    policy_created
+                ])
+                self.block_policy_seq += 1
+                created_policy += 1
+                generated_count += 1
+                policy_intervals = self._extract_scheduled_intervals(family_policy["snapshot"])
+
+                for member in members:
+                    sub_id = member["sub_id"]
+                    role = member["role"]
+
+                    if role == FamilyRole.CHILD:
+                        is_policy_active = random.random() < 0.8
+                    elif role == FamilyRole.PARENT:
+                        is_policy_active = random.random() < 0.55
+                    else:
+                        is_policy_active = random.random() < 0.35
+
+                    if is_policy_active and policy_intervals:
+                        if self._has_schedule_conflict(member_active_windows[sub_id], policy_intervals):
+                            is_policy_active = False
+                        else:
+                            self._append_active_windows(member_active_windows[sub_id], policy_intervals)
+
+                    self.csv.writer("policy_sub").writerow([
+                        self.policy_sub_seq,
+                        sub_id,
+                        family_policy_id,
+                        is_policy_active,
+                        policy_created,
+                        policy_created
+                    ])
+
+                    if is_policy_active:
+                        self.create_notification(
+                            sub_id=sub_id,
+                            noti_type=NotificationType.TIME_WINDOW_POLICY_APPLIED,
+                            message=f"“{family_policy['name']}” 시간 차단 정책이 적용되었습니다",
+                            created_time=policy_created
+                        )
+
+                    self.policy_sub_seq += 1
+                    created_mapping += 1
+
+        log_done(
+            f"POLICY_SUB 생성 완료 (가족 정책 {created_policy:,}건 / 구성원 매핑 {created_mapping:,}건)"
+        )
     
 
     # ======================================================
@@ -449,7 +743,7 @@ class BulkDataGenerator:
                     self.blocked_service_sub_seq,
                     sub_id,
                     blocked_service_id,
-                    False,
+                    True,
                     blocked_created,
                     blocked_created
                 ])
@@ -610,6 +904,8 @@ class BulkDataGenerator:
         total_family_members = self.generate_family()
         self.generate_remaining_users(total_family_members)
         self.generate_family_apply_create()
+        self.generate_family_apply_add()
+        self.generate_family_apply_remove()
 
         self.generate_policy_sub()
         self.generate_blocked_service_sub()

@@ -145,7 +145,7 @@ CREATE TABLE blocked_service_sub (
     blocked_service_sub_id BIGSERIAL NOT NULL,
     sub_id BIGINT NOT NULL REFERENCES subscription(sub_id),
     blocked_service_id BIGINT NOT NULL REFERENCES app_blocked_service(app_blocked_service_id),
-    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_time TIMESTAMP NOT NULL DEFAULT now(),
     modified_time TIMESTAMP NOT NULL DEFAULT now(),
     PRIMARY KEY ("blocked_service_sub_id"),
