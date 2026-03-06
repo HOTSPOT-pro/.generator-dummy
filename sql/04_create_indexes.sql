@@ -33,3 +33,7 @@ ON blocked_service_sub(sub_id);
 
 CREATE INDEX IF NOT EXISTS idx_present_data_target
 ON present_data(target_sub_id);
+
+CREATE UNIQUE INDEX uk_social_account_provider_social_id
+ON social_account (provider, social_id)
+WHERE is_deleted = false;

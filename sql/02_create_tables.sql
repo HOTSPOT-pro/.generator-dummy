@@ -30,9 +30,9 @@ CREATE TABLE social_account (
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     created_time TIMESTAMP NOT NULL DEFAULT now(),
     modified_time TIMESTAMP NOT NULL DEFAULT now(),
-    PRIMARY KEY ("social_account_id"),
-    CONSTRAINT uk_social_account_provider_social_id UNIQUE (provider, social_id)
+    PRIMARY KEY ("social_account_id")
 );
+
 
 CREATE TABLE subscription (
     sub_id BIGSERIAL NOT NULL,
