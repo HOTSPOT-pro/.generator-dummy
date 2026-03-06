@@ -744,6 +744,7 @@ class BulkDataGenerator:
                     sub_id,
                     blocked_service_id,
                     True,
+                    False,
                     blocked_created,
                     blocked_created
                 ])
