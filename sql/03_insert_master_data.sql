@@ -45,7 +45,7 @@ VALUES
 (17,'모바일배그','GAME_PUBG_M',TRUE, FALSE, now(), now()),
 (18,'네이버웹툰','TOON_NAVER',TRUE, FALSE, now(), now()),
 (19,'카카오웹툰','TOON_KAKAO',TRUE, FALSE, now(), now()),
-(20,'선물','PRESENT',TRUE, FALSE, now(), now())
+(20,'선물','PRESENT',TRUE, FALSE, now(), now());
 
 
 -- BLOCK POLICY
