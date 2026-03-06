@@ -4,7 +4,7 @@
       "member_key": "gyudong_1",
       "name": "이규동",
       "birth": "000120",
-      "plan_id": 3,
+      "plan_id": 1,
       "phone": "010-8844-4029",
       "email": "dlrbehd120@naver.com"
     },
@@ -12,7 +12,7 @@
       "member_key": "kyungmin_1",
       "name": "김경민",
       "birth": "010106",
-      "plan_id": 3,
+      "plan_id": 2,
       "phone": "010-9421-3964",
       "email": "kkm3964@gmail.com"
     },
@@ -20,7 +20,7 @@
       "member_key": "jae_1",
       "name": "이재",
       "birth": "980713",
-      "plan_id": 2,
+      "plan_id": 3,
       "phone": "010-5626-0713",
       "email": "lj3552@naver.com"
     },
@@ -28,7 +28,7 @@
       "member_key": "hyeongseo_1",
       "name": "신형서",
       "birth": "980724",
-      "plan_id": 3,
+      "plan_id": 4,
       "phone": "010-8584-8397",
       "email": "tlsgudtj123@gmail.com"
     },
@@ -36,7 +36,7 @@
       "member_key": "seungyeon_1",
       "name": "박승연",
       "birth": "020204",
-      "plan_id": 3,
+      "plan_id": 5,
       "phone": "010-5883-0056",
       "email": "40food@naver.com"
     },
@@ -44,7 +44,7 @@
       "member_key": "jiyeon_1",
       "name": "채지연",
       "birth": "001118",
-      "plan_id": 3,
+      "plan_id": 1,
       "phone": "010-2795-1892",
       "email": "xhdrp@sookmyung.ac.kr"
     }
