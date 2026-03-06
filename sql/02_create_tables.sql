@@ -30,9 +30,9 @@ CREATE TABLE social_account (
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     created_time TIMESTAMP NOT NULL DEFAULT now(),
     modified_time TIMESTAMP NOT NULL DEFAULT now(),
-    PRIMARY KEY ("social_account_id")
+    PRIMARY KEY ("social_account_id"),
+    CONSTRAINT uk_social_account_provider_social_id UNIQUE (provider, social_id)
 );
-
 
 CREATE TABLE subscription (
     sub_id BIGSERIAL NOT NULL,
@@ -141,6 +141,7 @@ CREATE TABLE blocked_service_sub (
     sub_id BIGINT NOT NULL REFERENCES subscription(sub_id),
     blocked_service_id BIGINT NOT NULL REFERENCES app_blocked_service(app_blocked_service_id),
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     created_time TIMESTAMP NOT NULL DEFAULT now(),
     modified_time TIMESTAMP NOT NULL DEFAULT now(),
     PRIMARY KEY ("blocked_service_sub_id"),
@@ -166,6 +167,7 @@ CREATE TABLE policy_sub (
     sub_id BIGINT NOT NULL REFERENCES subscription(sub_id),
     block_policy_id BIGINT NOT NULL REFERENCES block_policy(block_policy_id),
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     created_time TIMESTAMP NOT NULL DEFAULT now(),
     modified_time TIMESTAMP NOT NULL DEFAULT now(),
     PRIMARY KEY ("policy_sub_id")
