@@ -685,6 +685,7 @@ class BulkDataGenerator:
                         sub_id,
                         family_policy_id,
                         is_policy_active,
+                        False,
                         policy_created,
                         policy_created
                     ])
