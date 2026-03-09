@@ -19,6 +19,7 @@ class BulkDataGenerator:
 
         self.member_seq = 1
         self.subscription_seq = 1
+        self.subscription_key_seq = 1
         self.social_seq = 1
         self.family_seq = 1
         self.family_sub_seq = 1
@@ -110,8 +111,11 @@ class BulkDataGenerator:
         # SUBSCRIPTION
         plan_id = random.choice(list(PLANS.keys()))
         phone_raw = self.generate_unique_phone()
-        phone_enc = encrypt_aes(phone_raw)
+        dek, encrypted_dek = generate_data_key()
+        key_version = 1
+        phone_enc = encrypt_with_dek(phone_raw, dek)
         phone_hash = generate_blind_index(phone_raw)
+        kek_key_id = get_kek_key_id()
 
         sub_created = rand_datetime_between(member_created, now())
         is_locked = random.random() < 0.05
@@ -122,11 +126,24 @@ class BulkDataGenerator:
             member_id,
             phone_enc, 
             phone_hash,
+            key_version,
             is_locked,
             False,
             sub_created, 
             sub_created
         ])
+
+        self.csv.writer('subscription_key').writerow([
+            self.subscription_key_seq,
+            sub_id,
+            key_version,
+            encrypted_dek,
+            kek_key_id,
+            'active',
+            sub_created,
+            sub_created
+        ])
+        self.subscription_key_seq += 1
 
         self.subscription_plan_map[sub_id] = PLANS[plan_id]
         self.subscription_member_map[sub_id] = name

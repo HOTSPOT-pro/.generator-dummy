@@ -11,6 +11,7 @@ class CSVWriterManager:
             'member': self._open('member.csv'),
             'social_account': self._open('social_account.csv'),
             'subscription': self._open('subscription.csv'),
+            'subscription_key': self._open('subscription_key.csv'),
             'notification_allow': self._open('notification_allow.csv'),
             'family': self._open('family.csv'),
             'family_sub': self._open('family_sub.csv'),
