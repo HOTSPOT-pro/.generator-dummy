@@ -75,23 +75,23 @@ PROVIDERS = ['KAKAO', 'GOOGLE']
 APP_BLOCKED_SERVICES = [
     ("카카오톡", "MSG_KAKAO"), 
     ("라인", "MSG_LINE"), 
-    ("유튜브", "MEDIA_YOUTUBE"), 
-    ("넷플릭스", "MEDIA_NETFLIX"), 
+    ("YouTube", "MEDIA_YOUTUBE"), 
+    ("Netflix", "MEDIA_NETFLIX"), 
     ("치지직", "MEDIA_CHZZK"), 
-    ("숲", "MEDIA_SOOP"), 
-    ("인스타그램", "SNS_INSTAGRAM"), 
-    ("틱톡", "SNS_TIKTOK"), 
-    ("페이스북", "SNS_FACEBOOK"), 
+    ("SOOP", "MEDIA_SOOP"), 
+    ("Instagram", "SNS_INSTAGRAM"), 
+    ("TikTok", "SNS_TIKTOK"), 
+    ("Facebook", "SNS_FACEBOOK"), 
     ("EBS", "STUDY_EBS"), 
     ("메가스터디", "STUDY_MEGA"), 
     ("업비트", "FIN_UPBIT"), 
     ("키움증권", "FIN_KIWOOM"), 
-    ("크롬", "WEB_CHROME"), 
-    ("사파리", "WEB_SAFARI"), 
+    ("Chrome", "WEB_CHROME"), 
+    ("Safari", "WEB_SAFARI"), 
     ("롤토체스", "GAME_TFT"), 
-    ("모바일배그", "GAME_PUBG_M"), 
-    ("네이버웹툰", "TOON_NAVER"), 
-    ("카카오웹툰", "TOON_KAKAO")
+    ("배틀그라운드", "GAME_PUBG"), 
+    ("네이버 웹툰", "TOON_NAVER"), 
+    ("카카오 웹툰", "TOON_KAKAO")
 ]
 
 PREFERRED_CODES = [
@@ -99,7 +99,7 @@ PREFERRED_CODES = [
     "SNS_TIKTOK",
     "SNS_FACEBOOK",
     "GAME_TFT",
-    "GAME_PUBG_M",
+    "GAME_PUBG",
     "MEDIA_YOUTUBE",
     "MEDIA_NETFLIX",
     "MEDIA_CHZZK",
@@ -112,7 +112,7 @@ PREFERRED_CODES = [
 
 block_policies = [
         {
-            "name": "수면모드",
+            "name": "수면 모드",
             "description": "매일 지정한 수면 시간 동안 앱 사용을 제한해 규칙적인 생활을 돕는 정책입니다.",
             "type": PolicyType.SCHEDULED,
             "is_active": True,
