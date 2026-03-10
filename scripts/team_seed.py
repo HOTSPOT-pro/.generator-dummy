@@ -73,6 +73,13 @@ def _insert_new_subscription_key(
     )
 
 
+def _next_subscription_id(cur) -> int:
+    cur.execute(
+        "SELECT nextval(pg_get_serial_sequence('subscription', 'sub_id'))"
+    )
+    return int(cur.fetchone()[0])
+
+
 def get_or_create_active_dek(cur, bucket_id: int, ts: datetime) -> Tuple[int, bytes]:
     cur.execute(
         """
@@ -223,25 +230,16 @@ def upsert_subscription(cur, payload: Dict[str, Any], phone_offset: int) -> int:
     key_version = 1
     dek, encrypted_dek = generate_data_key()
     phone_enc = encrypt_with_dek(phone_raw, dek)
-    cur.execute(
-        """
-        INSERT INTO subscription (
-            plan_id, member_id, phone_enc, phone_hash, phone_key_bucket_id, phone_key_version, is_locked, is_deleted, created_time, modified_time
-        )
-        VALUES (%s, %s, %s, %s, %s, %s, FALSE, FALSE, %s, %s)
-        RETURNING sub_id
-        """,
-        (plan_id, None, phone_enc, phone_hash, 0, key_version, ts, ts),
-    )
-    sub_id = cur.fetchone()[0]
+    sub_id = _next_subscription_id(cur)
     bucket_id = calc_bucket_id(sub_id)
     cur.execute(
         """
-        UPDATE subscription
-        SET phone_key_bucket_id = %s
-        WHERE sub_id = %s
+        INSERT INTO subscription (
+            sub_id, plan_id, member_id, phone_enc, phone_hash, phone_key_bucket_id, phone_key_version, is_locked, is_deleted, created_time, modified_time
+        )
+        VALUES (%s, %s, %s, %s, %s, %s, %s, FALSE, FALSE, %s, %s)
         """,
-        (bucket_id, sub_id),
+        (sub_id, plan_id, None, phone_enc, phone_hash, bucket_id, key_version, ts, ts),
     )
     _insert_new_subscription_key(cur, bucket_id, key_version, encrypted_dek, ts)
     print(f"  [INSERT] subscription(pre-onboarding): {payload['member_key']} -> {sub_id}")
