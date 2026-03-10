@@ -50,3 +50,18 @@ ON present_data(target_sub_id);
 CREATE UNIQUE INDEX uk_social_account_provider_social_id
 ON social_account (provider, social_id)
 WHERE is_deleted = false;
+
+CREATE INDEX IF NOT EXISTS idx_family_active_list
+ON family(family_id)
+WHERE is_deleted = false;
+
+CREATE INDEX IF NOT EXISTS idx_family_sub_family_role_sub
+ON family_sub(family_id, family_role, sub_id);
+
+CREATE INDEX IF NOT EXISTS idx_subscription_active_sub
+ON subscription(sub_id)
+WHERE is_deleted = false;
+
+CREATE INDEX IF NOT EXISTS idx_member_active_member
+ON member(member_id)
+WHERE is_deleted = false;
