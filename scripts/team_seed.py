@@ -55,6 +55,24 @@ def calc_bucket_id(sub_id: int) -> int:
     return int(sub_id) % 1000
 
 
+def _insert_new_subscription_key(
+    cur,
+    bucket_id: int,
+    key_version: int,
+    encrypted_dek: str,
+    ts: datetime,
+):
+    cur.execute(
+        """
+        INSERT INTO subscription_key (
+            bucket_id, key_version, encrypted_dek, kek_key_id, status, created_time, modified_time
+        )
+        VALUES (%s, %s, %s, %s, 'active', %s, %s)
+        """,
+        (bucket_id, key_version, encrypted_dek, get_kek_key_id(), ts, ts),
+    )
+
+
 def get_or_create_active_dek(cur, bucket_id: int, ts: datetime) -> Tuple[int, bytes]:
     cur.execute(
         """
@@ -72,15 +90,7 @@ def get_or_create_active_dek(cur, bucket_id: int, ts: datetime) -> Tuple[int, by
 
     key_version = 1
     dek, encrypted_dek = generate_data_key()
-    cur.execute(
-        """
-        INSERT INTO subscription_key (
-            bucket_id, key_version, encrypted_dek, kek_key_id, status, created_time, modified_time
-        )
-        VALUES (%s, %s, %s, %s, 'active', %s, %s)
-        """,
-        (bucket_id, key_version, encrypted_dek, get_kek_key_id(), ts, ts),
-    )
+    _insert_new_subscription_key(cur, bucket_id, key_version, encrypted_dek, ts)
     return key_version, dek
 
 
@@ -233,15 +243,7 @@ def upsert_subscription(cur, payload: Dict[str, Any], phone_offset: int) -> int:
         """,
         (bucket_id, sub_id),
     )
-    cur.execute(
-        """
-        INSERT INTO subscription_key (
-            bucket_id, key_version, encrypted_dek, kek_key_id, status, created_time, modified_time
-        )
-        VALUES (%s, %s, %s, %s, 'active', %s, %s)
-        """,
-        (bucket_id, key_version, encrypted_dek, get_kek_key_id(), ts, ts),
-    )
+    _insert_new_subscription_key(cur, bucket_id, key_version, encrypted_dek, ts)
     print(f"  [INSERT] subscription(pre-onboarding): {payload['member_key']} -> {sub_id}")
     return sub_id
 
