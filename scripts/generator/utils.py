@@ -42,6 +42,9 @@ def elapsed_hms(start_time: float) -> str:
 # ======================================================
 
 _kms_client = None
+GCM_PREFIX = "gcm:"
+GCM_NONCE_SIZE = 12
+GCM_TAG_SIZE = 16
 
 def _get_kms_client():
     global _kms_client
@@ -51,18 +54,39 @@ def _get_kms_client():
     _kms_client = boto3.client("kms", region_name=AWS_REGION)
     return _kms_client
 
-def _encrypt_with_key(raw_bytes: bytes, key: bytes) -> str:
+def _encrypt_with_key_cbc(raw_bytes: bytes, key: bytes) -> str:
     iv = get_random_bytes(AES.block_size)
     cipher = AES.new(key, AES.MODE_CBC, iv)
     encrypted = cipher.encrypt(pad(raw_bytes, AES.block_size))
     return base64.b64encode(iv + encrypted).decode('utf-8')
 
-def _decrypt_with_key(cipher_text: str, key: bytes) -> bytes:
+def _decrypt_with_key_cbc(cipher_text: str, key: bytes) -> bytes:
     decoded = base64.b64decode(cipher_text)
     iv = decoded[:AES.block_size]
     encrypted = decoded[AES.block_size:]
     cipher = AES.new(key, AES.MODE_CBC, iv)
     return unpad(cipher.decrypt(encrypted), AES.block_size)
+
+def _encrypt_with_key(raw_bytes: bytes, key: bytes) -> str:
+    nonce = get_random_bytes(GCM_NONCE_SIZE)
+    cipher = AES.new(key, AES.MODE_GCM, nonce=nonce, mac_len=GCM_TAG_SIZE)
+    encrypted, tag = cipher.encrypt_and_digest(raw_bytes)
+    payload = nonce + encrypted + tag
+    return GCM_PREFIX + base64.b64encode(payload).decode('utf-8')
+
+def _decrypt_with_key(cipher_text: str, key: bytes) -> bytes:
+    # Preferred format: gcm:<base64(nonce + ciphertext + tag)>
+    if cipher_text.startswith(GCM_PREFIX):
+        encoded = cipher_text[len(GCM_PREFIX):]
+        decoded = base64.b64decode(encoded)
+        nonce = decoded[:GCM_NONCE_SIZE]
+        tag = decoded[-GCM_TAG_SIZE:]
+        encrypted = decoded[GCM_NONCE_SIZE:-GCM_TAG_SIZE]
+        cipher = AES.new(key, AES.MODE_GCM, nonce=nonce, mac_len=GCM_TAG_SIZE)
+        return cipher.decrypt_and_verify(encrypted, tag)
+
+    # Backward compatibility: legacy CBC payloads.
+    return _decrypt_with_key_cbc(cipher_text, key)
 
 def encrypt_aes(plain_text: str) -> str:
     return _encrypt_with_key(plain_text.encode('utf-8'), load_key("SECRET_KEY", 32))

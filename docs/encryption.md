@@ -7,6 +7,12 @@
 - `ENCRYPTION_PROVIDER=kms`일 때 AWS KMS `GenerateDataKey/Decrypt`를 실호출합니다.
 - 로컬 테스트가 필요하면 `ENCRYPTION_PROVIDER=local`로 폴백할 수 있습니다.
 
+## Data Encryption Algorithm
+
+- 신규 암호화 포맷은 `AES-256-GCM`입니다.
+- 저장 포맷은 `gcm:<base64(nonce + ciphertext + tag)>` 입니다.
+- 복호화는 GCM을 우선 시도하고, 기존 데이터 호환을 위해 legacy `AES-256-CBC` 포맷도 fallback으로 지원합니다.
+
 ## Subscription Key Model
 
 - `subscription.phone_key_bucket_id`: 전화번호 암호문에 사용한 키 버킷 ID (`sub_id % 1000`)
