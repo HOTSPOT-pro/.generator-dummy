@@ -227,11 +227,10 @@ def upsert_subscription(cur, payload: Dict[str, Any], phone_offset: int) -> int:
         print(f"  [UPDATE] subscription(pre-onboarding): {payload['member_key']} -> {sub_id}")
         return sub_id
 
-    key_version = 1
-    dek, encrypted_dek = generate_data_key()
-    phone_enc = encrypt_with_dek(phone_raw, dek)
     sub_id = _next_subscription_id(cur)
     bucket_id = calc_bucket_id(sub_id)
+    key_version, dek = get_or_create_active_dek(cur, bucket_id, ts)
+    phone_enc = encrypt_with_dek(phone_raw, dek)
     cur.execute(
         """
         INSERT INTO subscription (
@@ -241,7 +240,6 @@ def upsert_subscription(cur, payload: Dict[str, Any], phone_offset: int) -> int:
         """,
         (sub_id, plan_id, None, phone_enc, phone_hash, bucket_id, key_version, ts, ts),
     )
-    _insert_new_subscription_key(cur, bucket_id, key_version, encrypted_dek, ts)
     print(f"  [INSERT] subscription(pre-onboarding): {payload['member_key']} -> {sub_id}")
     return sub_id
 
