@@ -6,7 +6,7 @@
 ✔ 100만 사용자 생성  
 ✔ 가족 데이터 공유 구조 생성  
 ✔ 정책/차단/선물 데이터 시뮬레이션  
-✔ AES 암호화 + Blind Index 적용  
+✔ Envelope Encryption + Blind Index 적용  
 ✔ PostgreSQL COPY 기반 고속 적재  
 
 ---
@@ -79,7 +79,7 @@
 - 일 단위 요금제 / 1.5GB 요금제는 선물 데이터 생성 제외
 
 ✔ 개인정보 보호 설계
-- 전화번호 AES 암호화 저장
+- 전화번호 AES-GCM 암호화 저장
 - Blind Index 해시 검색 지원
 
 ---
@@ -103,11 +103,19 @@ DB_NAME=hotspot
 DB_USER=postgres
 DB_PASSWORD=postgres
 
-# AES 256 key (32 bytes)
-SECRET_KEY=your_32byte_secret_key_here
+# Encryption provider: kms | local
+ENCRYPTION_PROVIDER=kms
+AWS_REGION=ap-northeast-2
+KEK_KEY_ID=arn:aws:kms:ap-northeast-2:123456789012:key/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+AWS_ACCESS_KEY_ID=your_iam_access_key_id
+AWS_SECRET_ACCESS_KEY=your_iam_secret_access_key
+# AWS_SESSION_TOKEN=your_session_token  # temporary credentials only
 
 # HMAC key for blind index
 HASH_KEY=your_base64_hmac_key_here
+
+# local fallback (ENCRYPTION_PROVIDER=local only)
+SECRET_KEY=your_base64_32byte_key_here
 ```
 
 > .env가 없으면 config/db_config.py 기본값 사용
@@ -150,15 +158,15 @@ python scripts/team_seed.py
 
 ---
 ## 🔐 암호화 설계
-**AES 암호화**
+**Envelope Encryption + Data Encryption**
 
-전화번호는 AES-256-CBC 방식으로 저장됩니다.
-```
-Base64( IV + CipherText )
-```
+- 키 경계: `sub_id % 1000` 버킷 단위 DEK
+- 신규 암호화: `AES-256-GCM`
+- 저장 포맷: `gcm:<base64(nonce + ciphertext + tag)>`
+- 복호화: GCM 우선, legacy CBC fallback 지원
 
 ✔ 동일 값도 매번 다른 암호문 생성  
-✔ Java/Spring에서 동일 키로 복호화 가능
+✔ 위변조(tag) 검증 지원
 
 **Blind Index**
 
@@ -199,6 +207,7 @@ HMAC-SHA256(phone, HASH_KEY)
 - Python
 - PostgreSQL
 - psycopg2 COPY
-- AES Encryption
+- AWS KMS (optional)
+- AES-GCM Encryption
 - HMAC SHA256
 - Bulk Data Simulation

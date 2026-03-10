@@ -24,19 +24,43 @@ DB_CONFIG = {
     'password': os.getenv('DB_PASSWORD', 'app_password')
 }
 
-# --- AES-256 암호화 키 (32 bytes) ---
-def load_key(env_name: str, expected_len: int = 32) -> bytes:
-    value = os.getenv(env_name)
+# --- 공통 키 로더 ---
+def load_key_from_base64(value: str, env_name: str, expected_len: int = 32) -> bytes:
     if not value:
         raise ValueError(f"{env_name} not set")
-
     key = base64.b64decode(value)
-
     if len(key) != expected_len:
         raise ValueError(f"{env_name} must be {expected_len} bytes")
-
     return key
 
+def load_key(env_name: str, expected_len: int = 32) -> bytes:
+    value = os.getenv(env_name)
+    return load_key_from_base64(value, env_name, expected_len)
 
-SECRET_KEY = load_key("SECRET_KEY", 32)
-HASH_KEY = load_key("HASH_KEY", 32)
+
+ENCRYPTION_PROVIDER = os.getenv("ENCRYPTION_PROVIDER", "kms").lower()
+AWS_REGION = os.getenv("AWS_REGION")
+KEK_KEY_ID = os.getenv("KEK_KEY_ID")
+
+_HASH_KEY_CACHE = None
+
+
+def get_hash_key() -> bytes:
+    global _HASH_KEY_CACHE
+    if _HASH_KEY_CACHE is not None:
+        return _HASH_KEY_CACHE
+
+    _HASH_KEY_CACHE = load_key("HASH_KEY", 32)
+    return _HASH_KEY_CACHE
+
+
+def validate_encryption_config():
+    if ENCRYPTION_PROVIDER == "kms":
+        if not AWS_REGION:
+            raise ValueError("AWS_REGION must be set when ENCRYPTION_PROVIDER=kms")
+        if not KEK_KEY_ID:
+            raise ValueError("KEK_KEY_ID must be set when ENCRYPTION_PROVIDER=kms")
+    elif ENCRYPTION_PROVIDER == "local":
+        load_key("SECRET_KEY", 32)
+    else:
+        raise ValueError("ENCRYPTION_PROVIDER must be 'kms' or 'local'")

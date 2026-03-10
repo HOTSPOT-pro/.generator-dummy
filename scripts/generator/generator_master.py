@@ -19,6 +19,7 @@ class BulkDataGenerator:
 
         self.member_seq = 1
         self.subscription_seq = 1
+        self.subscription_key_seq = 1
         self.social_seq = 1
         self.family_seq = 1
         self.family_sub_seq = 1
@@ -41,6 +42,7 @@ class BulkDataGenerator:
         self.subscription_created_map: Dict[int, datetime] = {}
         self.family_subscriptions: List[Dict[str, Any]] = []
         self.non_family_subscriptions: List[int] = []
+        self.bucket_active_key_cache: Dict[int, Dict[str, Any]] = {}
 
         self.block_policy_map = {
             idx + 1: p for idx, p in enumerate(block_policies)
@@ -110,7 +112,29 @@ class BulkDataGenerator:
         # SUBSCRIPTION
         plan_id = random.choice(list(PLANS.keys()))
         phone_raw = self.generate_unique_phone()
-        phone_enc = encrypt_aes(phone_raw)
+        bucket_id = sub_id % 1000
+        bucket_key = self.bucket_active_key_cache.get(bucket_id)
+        if bucket_key is None:
+            dek, encrypted_dek = generate_data_key()
+            key_version = 1
+            self.csv.writer('subscription_key').writerow([
+                self.subscription_key_seq,
+                bucket_id,
+                key_version,
+                encrypted_dek,
+                get_kek_key_id(),
+                'active',
+                member_created,
+                member_created
+            ])
+            self.subscription_key_seq += 1
+            bucket_key = {"version": key_version, "dek": dek}
+            self.bucket_active_key_cache[bucket_id] = bucket_key
+        else:
+            dek = bucket_key["dek"]
+            key_version = bucket_key["version"]
+
+        phone_enc = encrypt_with_dek(phone_raw, dek)
         phone_hash = generate_blind_index(phone_raw)
 
         sub_created = rand_datetime_between(member_created, now())
@@ -122,6 +146,8 @@ class BulkDataGenerator:
             member_id,
             phone_enc, 
             phone_hash,
+            bucket_id,
+            key_version,
             is_locked,
             False,
             sub_created, 

@@ -28,23 +28,23 @@ INSERT INTO app_blocked_service (
 VALUES
 (1,'카카오톡','MSG_KAKAO',TRUE, FALSE, now(), now()),
 (2,'라인','MSG_LINE',TRUE, FALSE, now(), now()),
-(3,'유튜브','MEDIA_YOUTUBE',TRUE, FALSE, now(), now()),
-(4,'넷플릭스','MEDIA_NETFLIX',TRUE, FALSE, now(), now()),
+(3,'YouTube','MEDIA_YOUTUBE',TRUE, FALSE, now(), now()),
+(4,'Netflix','MEDIA_NETFLIX',TRUE, FALSE, now(), now()),
 (5,'치지직','MEDIA_CHZZK',TRUE, FALSE, now(), now()),
-(6,'숲','MEDIA_SOOP',TRUE, FALSE, now(), now()),
-(7,'인스타그램','SNS_INSTAGRAM',TRUE, FALSE, now(), now()),
-(8,'틱톡','SNS_TIKTOK',TRUE, FALSE, now(), now()),
-(9,'페이스북','SNS_FACEBOOK',TRUE, FALSE, now(), now()),
+(6,'SOOP','MEDIA_SOOP',TRUE, FALSE, now(), now()),
+(7,'Instagram','SNS_INSTAGRAM',TRUE, FALSE, now(), now()),
+(8,'TikTok','SNS_TIKTOK',TRUE, FALSE, now(), now()),
+(9,'Facebook','SNS_FACEBOOK',TRUE, FALSE, now(), now()),
 (10,'EBS','STUDY_EBS',TRUE, FALSE, now(), now()),
 (11,'메가스터디','STUDY_MEGA',TRUE, FALSE, now(), now()),
 (12,'업비트','FIN_UPBIT',TRUE, FALSE, now(), now()),
 (13,'키움증권','FIN_KIWOOM',TRUE, FALSE, now(), now()),
-(14,'크롬','WEB_CHROME',TRUE, FALSE, now(), now()),
-(15,'사파리','WEB_SAFARI',TRUE, FALSE, now(), now()),
+(14,'Chrome','WEB_CHROME',TRUE, FALSE, now(), now()),
+(15,'Safari','WEB_SAFARI',TRUE, FALSE, now(), now()),
 (16,'롤토체스','GAME_TFT',TRUE, FALSE, now(), now()),
-(17,'모바일배그','GAME_PUBG_M',TRUE, FALSE, now(), now()),
-(18,'네이버웹툰','TOON_NAVER',TRUE, FALSE, now(), now()),
-(19,'카카오웹툰','TOON_KAKAO',TRUE, FALSE, now(), now());
+(17,'배틀그라운드','GAME_PUBG',TRUE, FALSE, now(), now()),
+(18,'네이버 웹툰','TOON_NAVER',TRUE, FALSE, now(), now()),
+(19,'카카오 웹툰','TOON_KAKAO',TRUE, FALSE, now(), now());
 
 
 -- BLOCK POLICY
@@ -61,7 +61,7 @@ INSERT INTO block_policy (
     modified_time
 )
 VALUES
-(1,'수면모드','매일 지정한 수면 시간 동안 앱 사용을 제한해 규칙적인 생활을 돕는 정책입니다.',NULL,'SCHEDULED','{"days":["MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY","SUNDAY"],"startTime":"00:00","endTime":"07:00"}',TRUE,FALSE,now(),now()),
+(1,'수면 모드','매일 지정한 수면 시간 동안 앱 사용을 제한해 규칙적인 생활을 돕는 정책입니다.',NULL,'SCHEDULED','{"days":["MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY","SUNDAY"],"startTime":"00:00","endTime":"07:00"}',TRUE,FALSE,now(),now()),
 (2,'방해 금지 모드','일정 시간 동안 즉시 앱 사용을 차단해 집중이 필요한 순간을 지원하는 정책입니다.',NULL,'ONCE','{"durationMinutes":180}',TRUE,FALSE,now(),now()),
 (3,'수업 집중 모드','평일 수업 시간에 맞춰 앱 사용을 자동 제한해 학습 집중도를 높이는 정책입니다.',NULL,'SCHEDULED','{"days":["MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY"],"startTime":"09:00","endTime":"14:00"}',TRUE,FALSE,now(),now()),
 (4,'시험 기간 집중 모드','시험 대비 기간에 장시간 앱 사용을 제한해 학습 몰입을 강화하는 정책입니다.',NULL,'ONCE','{"startTime":"06:00","endTime":"23:59"}',TRUE,FALSE,now(),now());

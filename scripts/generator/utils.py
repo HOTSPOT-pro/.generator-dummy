@@ -3,13 +3,21 @@ import random
 import time
 import hmac
 import hashlib
+from typing import Optional, Tuple
 from datetime import datetime, date, timedelta
 from typing import List
 from Crypto.Cipher import AES
-from Crypto.Util.Padding import pad
+from Crypto.Util.Padding import pad, unpad
 from Crypto.Random import get_random_bytes
 
-from config.db_config import HASH_KEY, SECRET_KEY
+from config.db_config import (
+    AWS_REGION,
+    ENCRYPTION_PROVIDER,
+    KEK_KEY_ID,
+    get_hash_key,
+    load_key,
+    validate_encryption_config,
+)
 from generator.constants import *
 
 # ======================================================
@@ -33,11 +41,112 @@ def elapsed_hms(start_time: float) -> str:
 # Crypto
 # ======================================================
 
-def encrypt_aes(plain_text: str) -> str:
+_kms_client = None
+GCM_PREFIX = "gcm:"
+GCM_NONCE_SIZE = 12
+GCM_TAG_SIZE = 16
+
+def _get_kms_client():
+    global _kms_client
+    if _kms_client is not None:
+        return _kms_client
+    import boto3
+    _kms_client = boto3.client("kms", region_name=AWS_REGION)
+    return _kms_client
+
+def _encrypt_with_key_cbc(raw_bytes: bytes, key: bytes) -> str:
     iv = get_random_bytes(AES.block_size)
-    cipher = AES.new(SECRET_KEY, AES.MODE_CBC, iv)
-    encrypted = cipher.encrypt(pad(plain_text.encode('utf-8'), AES.block_size))
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+    encrypted = cipher.encrypt(pad(raw_bytes, AES.block_size))
     return base64.b64encode(iv + encrypted).decode('utf-8')
+
+def _decrypt_with_key_cbc(cipher_text: str, key: bytes) -> bytes:
+    decoded = base64.b64decode(cipher_text)
+    iv = decoded[:AES.block_size]
+    encrypted = decoded[AES.block_size:]
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+    return unpad(cipher.decrypt(encrypted), AES.block_size)
+
+def _encrypt_with_key(raw_bytes: bytes, key: bytes) -> str:
+    nonce = get_random_bytes(GCM_NONCE_SIZE)
+    cipher = AES.new(key, AES.MODE_GCM, nonce=nonce, mac_len=GCM_TAG_SIZE)
+    encrypted, tag = cipher.encrypt_and_digest(raw_bytes)
+    payload = nonce + encrypted + tag
+    return GCM_PREFIX + base64.b64encode(payload).decode('utf-8')
+
+def _decrypt_with_key(cipher_text: str, key: bytes) -> bytes:
+    # Preferred format: gcm:<base64(nonce + ciphertext + tag)>
+    if cipher_text.startswith(GCM_PREFIX):
+        encoded = cipher_text[len(GCM_PREFIX):]
+        decoded = base64.b64decode(encoded)
+        nonce = decoded[:GCM_NONCE_SIZE]
+        tag = decoded[-GCM_TAG_SIZE:]
+        encrypted = decoded[GCM_NONCE_SIZE:-GCM_TAG_SIZE]
+        cipher = AES.new(key, AES.MODE_GCM, nonce=nonce, mac_len=GCM_TAG_SIZE)
+        return cipher.decrypt_and_verify(encrypted, tag)
+
+    # Backward compatibility: legacy CBC payloads.
+    return _decrypt_with_key_cbc(cipher_text, key)
+
+def encrypt_aes(plain_text: str) -> str:
+    return _encrypt_with_key(plain_text.encode('utf-8'), load_key("SECRET_KEY", 32))
+
+def decrypt_aes(cipher_text: str) -> str:
+    return _decrypt_with_key(cipher_text, load_key("SECRET_KEY", 32)).decode('utf-8')
+
+def generate_dek() -> bytes:
+    return get_random_bytes(32)
+
+def generate_data_key() -> Tuple[bytes, str]:
+    """
+    Returns:
+    - plaintext DEK bytes
+    - encrypted DEK as base64 string
+    """
+    validate_encryption_config()
+    if ENCRYPTION_PROVIDER == "kms":
+        client = _get_kms_client()
+        resp = client.generate_data_key(
+            KeyId=KEK_KEY_ID,
+            KeySpec="AES_256",
+        )
+        plaintext = resp["Plaintext"]
+        ciphertext = resp["CiphertextBlob"]
+        return plaintext, base64.b64encode(ciphertext).decode("utf-8")
+
+    secret_key = load_key("SECRET_KEY", 32)
+    dek = generate_dek()
+    return dek, _encrypt_with_key(dek, secret_key)
+
+def wrap_dek(dek: bytes) -> str:
+    validate_encryption_config()
+    if ENCRYPTION_PROVIDER == "kms":
+        client = _get_kms_client()
+        resp = client.encrypt(KeyId=KEK_KEY_ID, Plaintext=dek)
+        return base64.b64encode(resp["CiphertextBlob"]).decode("utf-8")
+    return _encrypt_with_key(dek, load_key("SECRET_KEY", 32))
+
+def unwrap_dek(encrypted_dek: str, kek_key_id: Optional[str] = None) -> bytes:
+    validate_encryption_config()
+    if ENCRYPTION_PROVIDER == "kms":
+        client = _get_kms_client()
+        key_id = kek_key_id or KEK_KEY_ID
+        resp = client.decrypt(
+            KeyId=key_id,
+            CiphertextBlob=base64.b64decode(encrypted_dek),
+        )
+        return resp["Plaintext"]
+    return _decrypt_with_key(encrypted_dek, load_key("SECRET_KEY", 32))
+
+def encrypt_with_dek(plain_text: str, dek: bytes) -> str:
+    return _encrypt_with_key(plain_text.encode('utf-8'), dek)
+
+def decrypt_with_dek(cipher_text: str, dek: bytes) -> str:
+    return _decrypt_with_key(cipher_text, dek).decode('utf-8')
+
+def get_kek_key_id() -> str:
+    validate_encryption_config()
+    return KEK_KEY_ID
 
 # ======================================================
 # Crypto
@@ -45,7 +154,7 @@ def encrypt_aes(plain_text: str) -> str:
 
 def generate_blind_index(plain_text: str) -> str:
     signature = hmac.new(
-        HASH_KEY,
+        get_hash_key(),
         plain_text.encode('utf-8'),
         hashlib.sha256
     ).digest()
