@@ -39,6 +39,7 @@ CREATE TABLE subscription (
     member_id BIGINT REFERENCES member(member_id),
     phone_enc VARCHAR(255) NOT NULL,
     phone_hash VARCHAR(64) NOT NULL,
+    phone_key_bucket_id INTEGER NOT NULL,
     phone_key_version INTEGER NOT NULL DEFAULT 1,
     is_locked BOOLEAN NOT NULL DEFAULT FALSE,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
@@ -50,7 +51,7 @@ CREATE TABLE subscription (
 
 CREATE TABLE subscription_key (
     subscription_key_id BIGSERIAL NOT NULL,
-    sub_id BIGINT NOT NULL REFERENCES subscription(sub_id),
+    bucket_id INTEGER NOT NULL,
     key_version INTEGER NOT NULL,
     encrypted_dek TEXT NOT NULL,
     kek_key_id VARCHAR(255) NOT NULL,
@@ -58,7 +59,7 @@ CREATE TABLE subscription_key (
     created_time TIMESTAMP NOT NULL DEFAULT now(),
     modified_time TIMESTAMP NOT NULL DEFAULT now(),
     PRIMARY KEY ("subscription_key_id"),
-    CONSTRAINT uk_subscription_key_sub_version UNIQUE (sub_id, key_version),
+    CONSTRAINT uk_subscription_key_bucket_version UNIQUE (bucket_id, key_version),
     CONSTRAINT ck_subscription_key_status CHECK (status IN ('active', 'retired', 'disabled'))
 );
 

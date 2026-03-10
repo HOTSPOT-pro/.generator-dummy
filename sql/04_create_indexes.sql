@@ -7,11 +7,14 @@ ON subscription(phone_hash);
 CREATE INDEX IF NOT EXISTS idx_subscription_phone_key_version
 ON subscription(phone_key_version);
 
-CREATE INDEX IF NOT EXISTS idx_subscription_key_sub_status
-ON subscription_key(sub_id, status);
+CREATE INDEX IF NOT EXISTS idx_subscription_phone_key_bucket
+ON subscription(phone_key_bucket_id);
+
+CREATE INDEX IF NOT EXISTS idx_subscription_key_bucket_status
+ON subscription_key(bucket_id, status);
 
 CREATE UNIQUE INDEX IF NOT EXISTS uk_subscription_key_active
-ON subscription_key(sub_id)
+ON subscription_key(bucket_id)
 WHERE status = 'active';
 
 CREATE INDEX IF NOT EXISTS idx_family_sub_family

@@ -72,4 +72,5 @@
 - `members[].phone` 값이 우선 적용됩니다.
 - 같은 번호가 기존 더미에 이미 있으면 기존 회선을 다른 번호로 이동시켜 팀 번호를 확보합니다.
 - `subscription.phone_hash`는 인덱스로 조회 성능을 보조하며, 팀 번호 충돌은 `team_seed.py` 로직에서 조정합니다.
-- `subscription_key`에 활성 DEK가 없으면 `team_seed`가 `key_version=1, status=active` 키를 자동 생성합니다.
+- 키 버킷은 `sub_id % 1000` 규칙으로 계산합니다.
+- 해당 버킷의 `subscription_key` 활성 DEK가 없으면 `team_seed`가 `key_version=1, status=active` 키를 자동 생성합니다.

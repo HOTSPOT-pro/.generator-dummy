@@ -51,16 +51,20 @@ def now():
     return datetime.now().replace(microsecond=0)
 
 
-def get_or_create_active_dek(cur, sub_id: int, ts: datetime) -> Tuple[int, bytes]:
+def calc_bucket_id(sub_id: int) -> int:
+    return int(sub_id) % 1000
+
+
+def get_or_create_active_dek(cur, bucket_id: int, ts: datetime) -> Tuple[int, bytes]:
     cur.execute(
         """
         SELECT key_version, encrypted_dek, kek_key_id
         FROM subscription_key
-        WHERE sub_id = %s AND status = 'active'
+        WHERE bucket_id = %s AND status = 'active'
         ORDER BY key_version DESC
         LIMIT 1
         """,
-        (sub_id,),
+        (bucket_id,),
     )
     row = cur.fetchone()
     if row:
@@ -71,11 +75,11 @@ def get_or_create_active_dek(cur, sub_id: int, ts: datetime) -> Tuple[int, bytes
     cur.execute(
         """
         INSERT INTO subscription_key (
-            sub_id, key_version, encrypted_dek, kek_key_id, status, created_time, modified_time
+            bucket_id, key_version, encrypted_dek, kek_key_id, status, created_time, modified_time
         )
         VALUES (%s, %s, %s, %s, 'active', %s, %s)
         """,
-        (sub_id, key_version, encrypted_dek, get_kek_key_id(), ts, ts),
+        (bucket_id, key_version, encrypted_dek, get_kek_key_id(), ts, ts),
     )
     return key_version, dek
 
@@ -144,16 +148,17 @@ def ensure_team_phone_priority(
         avoid_phone_hash=desired_hash,
     )
     ts = now()
-    key_version, dek = get_or_create_active_dek(cur, conflict_sub_id, ts)
+    bucket_id = calc_bucket_id(conflict_sub_id)
+    key_version, dek = get_or_create_active_dek(cur, bucket_id, ts)
     fallback_enc = encrypt_with_dek(fallback_phone, dek)
     fallback_hash = generate_blind_index(fallback_phone)
     cur.execute(
         """
         UPDATE subscription
-        SET phone_enc = %s, phone_hash = %s, phone_key_version = %s, modified_time = %s
+        SET phone_enc = %s, phone_hash = %s, phone_key_bucket_id = %s, phone_key_version = %s, modified_time = %s
         WHERE sub_id = %s
         """,
-        (fallback_enc, fallback_hash, key_version, ts, conflict_sub_id),
+        (fallback_enc, fallback_hash, bucket_id, key_version, ts, conflict_sub_id),
     )
     print(
         f"  [MOVE] subscription phone reassigned: sub_id={conflict_sub_id} "
@@ -191,15 +196,16 @@ def upsert_subscription(cur, payload: Dict[str, Any], phone_offset: int) -> int:
     phone_hash = generate_blind_index(phone_raw)
 
     if sub_id:
-        key_version, dek = get_or_create_active_dek(cur, sub_id, ts)
+        bucket_id = calc_bucket_id(sub_id)
+        key_version, dek = get_or_create_active_dek(cur, bucket_id, ts)
         phone_enc = encrypt_with_dek(phone_raw, dek)
         cur.execute(
             """
             UPDATE subscription
-            SET plan_id = %s, member_id = NULL, phone_enc = %s, phone_hash = %s, phone_key_version = %s, modified_time = %s, is_deleted = FALSE
+            SET plan_id = %s, member_id = NULL, phone_enc = %s, phone_hash = %s, phone_key_bucket_id = %s, phone_key_version = %s, modified_time = %s, is_deleted = FALSE
             WHERE sub_id = %s
             """,
-            (plan_id, phone_enc, phone_hash, key_version, ts, sub_id),
+            (plan_id, phone_enc, phone_hash, bucket_id, key_version, ts, sub_id),
         )
         print(f"  [UPDATE] subscription(pre-onboarding): {payload['member_key']} -> {sub_id}")
         return sub_id
@@ -210,22 +216,31 @@ def upsert_subscription(cur, payload: Dict[str, Any], phone_offset: int) -> int:
     cur.execute(
         """
         INSERT INTO subscription (
-            plan_id, member_id, phone_enc, phone_hash, phone_key_version, is_locked, is_deleted, created_time, modified_time
+            plan_id, member_id, phone_enc, phone_hash, phone_key_bucket_id, phone_key_version, is_locked, is_deleted, created_time, modified_time
         )
-        VALUES (%s, %s, %s, %s, %s, FALSE, FALSE, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, FALSE, FALSE, %s, %s)
         RETURNING sub_id
         """,
-        (plan_id, None, phone_enc, phone_hash, key_version, ts, ts),
+        (plan_id, None, phone_enc, phone_hash, 0, key_version, ts, ts),
     )
     sub_id = cur.fetchone()[0]
+    bucket_id = calc_bucket_id(sub_id)
+    cur.execute(
+        """
+        UPDATE subscription
+        SET phone_key_bucket_id = %s
+        WHERE sub_id = %s
+        """,
+        (bucket_id, sub_id),
+    )
     cur.execute(
         """
         INSERT INTO subscription_key (
-            sub_id, key_version, encrypted_dek, kek_key_id, status, created_time, modified_time
+            bucket_id, key_version, encrypted_dek, kek_key_id, status, created_time, modified_time
         )
         VALUES (%s, %s, %s, %s, 'active', %s, %s)
         """,
-        (sub_id, key_version, encrypted_dek, get_kek_key_id(), ts, ts),
+        (bucket_id, key_version, encrypted_dek, get_kek_key_id(), ts, ts),
     )
     print(f"  [INSERT] subscription(pre-onboarding): {payload['member_key']} -> {sub_id}")
     return sub_id
