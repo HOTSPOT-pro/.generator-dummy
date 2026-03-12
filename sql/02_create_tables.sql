@@ -156,7 +156,6 @@ CREATE TABLE blocked_service_sub (
     sub_id BIGINT NOT NULL REFERENCES subscription(sub_id),
     blocked_service_id BIGINT NOT NULL REFERENCES app_blocked_service(app_blocked_service_id),
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
-    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     created_time TIMESTAMP NOT NULL DEFAULT now(),
     modified_time TIMESTAMP NOT NULL DEFAULT now(),
     PRIMARY KEY ("blocked_service_sub_id"),
@@ -182,10 +181,10 @@ CREATE TABLE policy_sub (
     sub_id BIGINT NOT NULL REFERENCES subscription(sub_id),
     block_policy_id BIGINT NOT NULL REFERENCES block_policy(block_policy_id),
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
-    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     created_time TIMESTAMP NOT NULL DEFAULT now(),
     modified_time TIMESTAMP NOT NULL DEFAULT now(),
-    PRIMARY KEY ("policy_sub_id")
+    PRIMARY KEY ("policy_sub_id"),
+    CONSTRAINT uk_policy_sub_composite UNIQUE (sub_id, block_policy_id)
 );
 
 CREATE TABLE present_data (
