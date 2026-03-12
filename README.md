@@ -83,6 +83,271 @@
 - Blind Index 해시 검색 지원
 
 ---
+## 🧩 ERD
+```mermaid
+erDiagram
+    MEMBER{
+        BIGINT member_id PK
+        VARCHAR(10) name
+        VARCHAR(6) birth
+        VARCHAR(10) status
+        BOOL is_deleted
+        DATETIME created_time
+        DATETIME modified_time
+    }
+
+    FAMILY {
+        BIGINT family_id PK
+        INTEGER family_num
+        BIGINT family_data_amount
+        ENUM priority_type
+        BOOL is_deleted
+        DATETIME created_time
+        DATETIME modified_time
+    }
+
+    FAMILY_SUB {
+        BIGINT family_sub_id PK
+        BIGINT sub_id FK
+        BIGINT family_id FK
+        ENUM family_role
+        INTEGER priority
+        BIGINT data_limit
+    }
+
+    SUBSCRIPTION {
+        BIGINT sub_id PK
+        BIGINT plan_id FK
+        BIGINT member_id FK
+        VARCHAR(255) phone_enc
+        VARCHAR(64) phone_hash
+        INTEGER phone_key_bucket_id
+        INTEGER phone_key_version
+        BOOL is_locked
+        BOOL is_deleted
+        DATETIME created_time
+        DATETIME modified_time
+    }
+
+    SUBSCRIPTION_KEY {
+        BIGINT subscription_key_id PK
+        INTEGER bucket_id
+        INTEGER key_version
+        TEXT encrypted_dek
+        VARCHAR(255) kek_key_id
+        VARCHAR(20) status
+        DATETIME created_time
+        DATETIME modified_time
+    }
+
+    PLAN {
+        BIGINT plan_id PK
+        VARCHAR(20) plan_name
+        BIGINT plan_data_amount
+        VARCHAR(10) data_period
+        BOOL is_deleted
+        DATETIME created_time
+        DATETIME modified_time
+    }
+
+    SOCIAL_ACCOUNT {
+        BIGINT social_account_id PK
+        BIGINT member_id FK
+        VARCHAR(50) email
+        VARCHAR(50) social_id
+        VARCHAR(10) provider
+        BOOL is_deleted
+        DATETIME created_time
+        DATETIME modified_time
+    }
+
+    APP_BLOCKED_SERVICE {
+        BIGINT app_blocked_service_id PK
+        VARCHAR(30) blocked_service_name
+        VARCHAR(30) blocked_service_code
+        BOOL is_active
+        BOOL is_deleted
+    }
+
+    BLOCKED_SERVICE_SUB {
+        BIGINT blocked_service_sub_id PK
+        BIGINT sub_id FK
+        BIGINT blocked_service_id FK
+        BOOL is_active
+    }
+
+    BLOCK_POLICY {
+        BIGINT block_policy_id PK
+        VARCHAR(30) policy_name
+        ENUM policy_type
+        JSON policy_snapshot
+        BOOL is_active
+        BOOL is_deleted
+    }
+
+    POLICY_SUB {
+        BIGINT policy_sub_id PK
+        BIGINT sub_id FK
+        BIGINT block_policy_id FK
+        BOOL is_active
+    }
+
+    FAMILY_APPLY {
+        BIGINT family_apply_id PK
+        BIGINT requester_sub_id FK
+        BIGINT family_id FK
+        ENUM apply_type
+        VARCHAR(255) doc_url
+        ENUM status
+        DATETIME created_time
+        DATETIME modified_time
+    }
+
+    FAMILY_APPLY_TARGET {
+        BIGINT family_apply_target_id PK
+        BIGINT family_apply_id FK
+        BIGINT target_sub_id FK
+        ENUM target_family_role
+    }
+
+    FAMILY_REMOVE_SCHEDULE {
+        BIGINT family_remove_schedule_id PK
+        BIGINT target_sub_id FK
+        BIGINT family_id FK
+        ENUM status
+        DATE schedule_date
+        DATETIME created_time
+        DATETIME modified_time
+    }
+
+    NOTIFICATION {
+        BIGINT notification_id PK
+        BIGINT sub_id FK
+        VARCHAR(50) notification_type
+        VARCHAR(100) notification_title
+        VARCHAR(200) notification_content
+        DATETIME created_time
+        BOOL is_read
+        VARCHAR(100) event_id
+    }
+
+    NOTIFICATION_ALLOW {
+        BIGINT notification_allow_id PK
+        BIGINT sub_id FK
+        VARCHAR(20) notification_category
+        BOOL notification_allow
+        BOOL is_deleted
+        DATETIME created_time
+        DATETIME modified_time
+    }
+
+    PRESENT_DATA {
+        BIGINT present_data_id PK
+        BIGINT target_sub_id FK
+        BIGINT provide_sub_id FK
+        BIGINT data_amount
+        DATETIME created_time
+    }
+
+    MEMBER ||--o{ SUBSCRIPTION : owns
+    MEMBER ||--o{ SOCIAL_ACCOUNT : has
+    PLAN ||--o{ SUBSCRIPTION : provides
+    FAMILY ||--o{ FAMILY_SUB : has
+    SUBSCRIPTION ||--o{ FAMILY_SUB : mapped
+    SUBSCRIPTION ||--o{ NOTIFICATION : receives
+    SUBSCRIPTION ||--o{ NOTIFICATION_ALLOW : configures
+    SUBSCRIPTION ||--o{ PRESENT_DATA : target_sub
+    SUBSCRIPTION ||--o{ PRESENT_DATA : provide_sub
+    SUBSCRIPTION ||--o{ POLICY_SUB : applies
+    BLOCK_POLICY ||--o{ POLICY_SUB : mapped
+    SUBSCRIPTION ||--o{ BLOCKED_SERVICE_SUB : applies
+    APP_BLOCKED_SERVICE ||--o{ BLOCKED_SERVICE_SUB : mapped
+    FAMILY ||--o{ FAMILY_APPLY : owns
+    FAMILY_APPLY ||--o{ FAMILY_APPLY_TARGET : has
+    SUBSCRIPTION ||--o{ FAMILY_APPLY : requester
+    SUBSCRIPTION ||--o{ FAMILY_APPLY_TARGET : target
+    FAMILY ||--o{ FAMILY_REMOVE_SCHEDULE : schedules
+    SUBSCRIPTION ||--o{ FAMILY_REMOVE_SCHEDULE : target
+```
+
+---
+## 🧱 마스터 템플릿
+
+### 요금제 템플릿 (`plan`)
+| 요금제명 | 데이터 제공량 | 제공량 기준 |
+| --- | --- | --- |
+| 5G 시그니처 | 무제한 | MONTH |
+| 5G 스탠다드 | 150GB | MONTH |
+| 5G 베이직+ | 24GB | MONTH |
+| LTE 데이터 33 | 1.5GB | MONTH |
+| LTE 다이렉트 45 | 1GB | DAY |
+
+
+### 앱 차단 서비스 (`app_blocked_service`)
+| 서비스명 | 서비스 코드 |
+| --- | --- |
+| 카카오톡 | `MSG_KAKAO` |
+| 라인 | `MSG_LINE` |
+| YouTube | `MEDIA_YOUTUBE` |
+| Netflix | `MEDIA_NETFLIX` |
+| 치지직 | `MEDIA_CHZZK` |
+| SOOP | `MEDIA_SOOP` |
+| Instagram | `SNS_INSTAGRAM` |
+| TikTok | `SNS_TIKTOK` |
+| Facebook | `SNS_FACEBOOK` |
+| EBS | `STUDY_EBS` |
+| 메가스터디 | `STUDY_MEGA` |
+| 업비트 | `FIN_UPBIT` |
+| 키움증권 | `FIN_KIWOOM` |
+| Chrome | `WEB_CHROME` |
+| Safari | `WEB_SAFARI` |
+| 롤토체스 | `GAME_TFT` |
+| 배틀그라운드 | `GAME_PUBG` |
+| 네이버 웹툰 | `TOON_NAVER` |
+| 카카오 웹툰 | `TOON_KAKAO` |
+
+### 시간/즉시 차단 정책 템플릿 (`block_policy`)
+| 정책명 | 정책 유형 | 설명 |
+| --- | --- | --- |
+| 수면 모드 | `SCHEDULED` | 매일 지정한 수면 시간 동안 앱 사용을 제한해 규칙적인 생활을 돕는 정책 |
+| 방해 금지 모드 | `ONCE` | 일정 시간 동안 즉시 앱 사용을 차단해 집중이 필요한 순간을 지원하는 정책 |
+| 수업 집중 모드 | `SCHEDULED` | 평일 수업 시간에 맞춰 앱 사용을 자동 제한해 학습 집중도를 높이는 정책 |
+| 시험 기간 집중 모드 | `ONCE` | 시험 대비 기간에 장시간 앱 사용을 제한해 학습 몰입을 강화하는 정책 |
+
+**수면 모드**
+```json
+{
+  "days": ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"],
+  "startTime": "00:00",
+  "endTime": "07:00"
+}
+```
+
+**방해 금지 모드**
+```json
+{
+  "durationMinutes": 180
+}
+```
+
+**수업 집중 모드**
+```json
+{
+  "days": ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"],
+  "startTime": "09:00",
+  "endTime": "14:00"
+}
+```
+
+**시험 기간 집중 모드**
+```json
+{
+  "startTime": "06:00",
+  "endTime": "23:59"
+}
+```
+
+---
 ## ⚙️ 설치
 ```
 pip install -r requirements.txt
