@@ -91,7 +91,8 @@ APP_BLOCKED_SERVICES = [
     ("롤토체스", "GAME_TFT"), 
     ("배틀그라운드", "GAME_PUBG"), 
     ("네이버 웹툰", "TOON_NAVER"), 
-    ("카카오 웹툰", "TOON_KAKAO")
+    ("카카오 웹툰", "TOON_KAKAO"),
+    ("데이터 선물하기", "PRESENT_DATA")
 ]
 
 PREFERRED_CODES = [

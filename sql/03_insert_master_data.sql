@@ -44,7 +44,8 @@ VALUES
 (16,'롤토체스','GAME_TFT',TRUE, FALSE, now(), now()),
 (17,'배틀그라운드','GAME_PUBG',TRUE, FALSE, now(), now()),
 (18,'네이버 웹툰','TOON_NAVER',TRUE, FALSE, now(), now()),
-(19,'카카오 웹툰','TOON_KAKAO',TRUE, FALSE, now(), now());
+(19,'카카오 웹툰','TOON_KAKAO',TRUE, FALSE, now(), now()),
+(20,'데이터 선물하기','PRESENT_DATA',TRUE, FALSE, now(), now());
 
 
 -- BLOCK POLICY
