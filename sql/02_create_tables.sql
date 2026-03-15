@@ -74,6 +74,16 @@ CREATE TABLE family (
     PRIMARY KEY ("family_id")
 );
 
+CREATE TABLE family_report (
+    family_report_id BIGSERIAL NOT NULL,
+    family_id BIGINT NOT NULL REFERENCES family(family_id),
+    receive_day VARCHAR(10) NOT NULL,
+    is_active BOOLEAN NOT NULL,
+    created_time TIMESTAMP NOT NULL DEFAULT now(),
+    modified_time TIMESTAMP NOT NULL DEFAULT now(),
+    PRIMARY KEY ("family_report_id")
+);
+
 CREATE TABLE family_sub (
     family_sub_id BIGSERIAL NOT NULL,
     sub_id BIGINT NOT NULL REFERENCES subscription(sub_id),
